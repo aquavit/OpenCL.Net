@@ -19,55 +19,92 @@
 
 #endregion
 
+using System;
+
 namespace OpenCL.Net
 {
     public static partial class Cl
     {
         #region Platform API
 
-        public static PlatformId[] GetPlatformIDs(out ErrorCode error)
+        public static Platform[] GetPlatformIDs(out ErrorCode error)
         {
             uint platformCount;
 
             error = GetPlatformIDs(0, null, out platformCount);
             if (error != ErrorCode.Success)
-                return new PlatformId[0];
+                return new Platform[0];
 
-            var platformIds = new PlatformId[platformCount] ;
+            var platformIds = new Platform[platformCount] ;
             error = GetPlatformIDs(platformCount, platformIds, out platformCount);
             if (error != ErrorCode.Success)
-                return new PlatformId[0];
+                return new Platform[0];
             
             return platformIds;
+        }
+
+        public static InfoBuffer GetPlatformInfo(Platform platform, PlatformInfo paramName, out ErrorCode error)
+        {
+            return GetInfo(Cl.GetPlatformInfo, platform, paramName, out error);
         }
 
         #endregion
 
         #region Device API
 
-        public static DeviceId[] GetDeviceIDs(PlatformId platform, DeviceType deviceType, out ErrorCode error)
+        public static Device[] GetDeviceIDs(Platform platform, DeviceType deviceType, out ErrorCode error)
         {
             uint deviceCount;
             error = GetDeviceIDs(platform, deviceType, 0, null, out deviceCount);
             if (error != ErrorCode.Success)
-                return new DeviceId[0];
+                return new Device[0];
 
-            var deviceIds = new DeviceId[deviceCount];
+            var deviceIds = new Device[deviceCount];
             error = GetDeviceIDs(platform, deviceType, deviceCount, deviceIds, out deviceCount);
             if (error != ErrorCode.Success)
-                return new DeviceId[0];
+                return new Device[0];
             
             return deviceIds;
         }
 
-        public static InfoBuffer GetDeviceInfo(DeviceId device, DeviceInfo paramName, out ErrorCode error)
+        public static InfoBuffer GetDeviceInfo(Device device, DeviceInfo paramName, out ErrorCode error)
         {
             return GetInfo(GetDeviceInfo, device, paramName, out error);
         }
 
         #endregion
 
+        #region Context API
+
+        public static InfoBuffer GetContextInfo(Context context, ContextInfo paramName, out ErrorCode error)
+        {
+            return GetInfo(GetContextInfo, context, paramName, out error);
+        }
+
+        #endregion 
+
         #region Memory Object API
+
+        public static InfoBuffer GetMemObjectInfo(Mem mem, MemInfo paramName, out ErrorCode error)
+        {
+            if (paramName == MemInfo.HostPtr) // Handle special case
+            {
+                IntPtr size = GetInfo(Cl.GetMemObjectInfo, mem, Cl.MemInfo.Size, out error).CastTo<IntPtr>();
+                var buffer = new InfoBuffer(size);
+                error = GetMemObjectInfo(mem, paramName, size, buffer, out size);
+                if (error != ErrorCode.Success)
+                    return InfoBuffer.Empty;
+
+                return buffer;
+            }
+
+            return GetInfo(GetMemObjectInfo, mem, paramName, out error);
+        }
+
+        public static InfoBuffer GetImageInfo(Mem image, ImageInfo paramName, out ErrorCode error)
+        {
+            return GetInfo(GetImageInfo, image, paramName, out error);
+        }
 
         public static ImageFormat[] GetSupportedImageFormats(Context context, MemFlags flags, MemObjectType imageType, out ErrorCode error)
         {
@@ -82,6 +119,29 @@ namespace OpenCL.Net
                 return new ImageFormat[0];
             
             return imageFormats;
+        }
+
+        #endregion
+
+        #region Program Object API
+
+        public static InfoBuffer GetProgramInfo(Program program, ProgramInfo paramName, out ErrorCode error)
+        {
+            return GetInfo(GetProgramInfo, program, paramName, out error);
+        }
+
+        public static InfoBuffer GetProgramBuildInfo(Program program, Device device, ProgramBuildInfo paramName, out ErrorCode error)
+        {
+            return GetInfo(GetProgramBuildInfo, program, device, paramName, out error);
+        }
+
+        #endregion
+
+        #region Command Queue API
+
+        public static InfoBuffer GetCommandQueueInfo(CommandQueue commandQueue, CommandQueueInfo paramName, out ErrorCode error)
+        {
+            return GetInfo(GetCommandQueueInfo, commandQueue, paramName, out error);
         }
 
         #endregion

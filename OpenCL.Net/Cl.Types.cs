@@ -26,8 +26,6 @@ namespace OpenCL.Net
 {
     public static partial class Cl
     {
-        #region Handles and Types
-
         internal interface IHandle
         {
             IntPtr Handle
@@ -47,11 +45,11 @@ namespace OpenCL.Net
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct PlatformId : IHandle
+        public struct Platform : IHandle
         {
             private readonly IntPtr _handle;
 
-            internal PlatformId(IntPtr handle)
+            internal Platform(IntPtr handle)
             {
                 _handle = handle;
             }
@@ -78,11 +76,11 @@ namespace OpenCL.Net
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct DeviceId : IHandle
+        public struct Device : IHandle
         {
             private readonly IntPtr _handle;
 
-            internal DeviceId(IntPtr handle)
+            internal Device(IntPtr handle)
             {
                 _handle = handle;
             }
@@ -323,6 +321,53 @@ namespace OpenCL.Net
             #endregion
         }
 
-        #endregion
+        [StructLayout(LayoutKind.Sequential)]
+        public struct CommandQueue : IRefCountedHandle
+        {
+            private readonly IntPtr _handle;
+
+            internal CommandQueue(IntPtr handle)
+            {
+                _handle = handle;
+            }
+            
+            #region IRefCountedHandle Members
+
+            public void Retain()
+            {
+                RetainCommandQueue(this);
+            }
+
+            #endregion
+
+            #region IHandle Members
+
+            IntPtr IHandle.Handle
+            {
+                get
+                {
+                    return _handle;
+                }
+            }
+
+            public IntPtr Zero
+            {
+                get
+                {
+                    return IntPtr.Zero;
+                }
+            }
+
+            #endregion
+
+            #region IDisposable Members
+
+            public void Dispose()
+            {
+                ReleaseCommandQueue(this);
+            }
+
+            #endregion
+        }
     }
 }

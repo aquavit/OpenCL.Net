@@ -27,8 +27,38 @@ namespace OpenCL.Net
 {
     public static partial class Cl
     {
-        #region Extensions and helpers
+        internal static InfoBuffer GetInfo<THandleType, TEnumType>(
+            GetInfoDelegate<THandleType, TEnumType> method, THandleType handle, TEnumType name, out ErrorCode error)
+        {
+            IntPtr paramSize;
+            error = method(handle, name, IntPtr.Zero, InfoBuffer.Empty, out paramSize);
+            if (error != ErrorCode.Success)
+                return InfoBuffer.Empty;
 
+            var buffer = new InfoBuffer(paramSize);
+            error = method(handle, name, paramSize, buffer, out paramSize);
+            if (error != ErrorCode.Success)
+                return InfoBuffer.Empty;
+
+            return buffer;
+        }
+
+        internal static InfoBuffer GetInfo<THandle1Type, THandle2Type, TEnumType>(
+            GetInfoDelegate<THandle1Type, THandle2Type, TEnumType> method, THandle1Type handle1, THandle2Type handle2, TEnumType name, out ErrorCode error)
+        {
+            IntPtr paramSize;
+            error = method(handle1, handle2, name, IntPtr.Zero, InfoBuffer.Empty, out paramSize);
+            if (error != ErrorCode.Success)
+                return InfoBuffer.Empty;
+
+            var buffer = new InfoBuffer(paramSize);
+            error = method(handle1, handle2, name, paramSize, buffer, out paramSize);
+            if (error != ErrorCode.Success)
+                return InfoBuffer.Empty;
+
+            return buffer;
+        }
+        
         [StructLayout(LayoutKind.Sequential)]
         public struct InfoBuffer : IDisposable
         {
@@ -52,13 +82,20 @@ namespace OpenCL.Net
                 }
             }
 
-            public T CastTo<T>() where T : struct
+            public T CastTo<T>() where T: struct
             {
-                Type resultType = typeof(T);
-                if (resultType.IsEnum)
-                    return (T)Marshal.PtrToStructure(_buffer, Enum.GetUnderlyingType(resultType));
+                return _buffer.ElementAt<T>(0);
+            }
 
-                return (T)Marshal.PtrToStructure(_buffer, typeof(T));
+            public T CastTo<T>(int index) where T: struct
+            {
+                return _buffer.ElementAt<T>(index);
+            }
+
+            public IEnumerable<T> CastToEnumerable<T>(IEnumerable<int> indices) where T : struct
+            {
+                foreach (int index in indices)
+                    yield return _buffer.ElementAt<T>(index);
             }
 
             public override string ToString()
@@ -86,48 +123,6 @@ namespace OpenCL.Net
             }
 
             #endregion
-        }
-
-        public struct InfoBufferArray<T> : IDisposable where T : struct, IEnumerable<T>
-        {
-            private static readonly int TypeSize = Marshal.SizeOf(typeof(T));
-
-            private readonly int _numElements;
-            private readonly InfoBuffer _buffer;
-
-            public InfoBufferArray(int numElements)
-            {
-                _numElements = numElements;
-                _buffer = new InfoBuffer(new IntPtr(TypeSize * numElements));
-            }
-
-            internal IntPtr Address
-            {
-                get
-                {
-                    return _buffer.Address;
-                }
-            }
-
-            #region IDisposable Members
-
-            public void Dispose()
-            {
-                _buffer.Dispose();
-            }
-
-            #endregion
-
-            public T this[int index]
-            {
-                get
-                {
-                    if ((index < 0) || (index > _numElements - 1))
-                        throw new IndexOutOfRangeException(string.Format("Index ({0}) was out of range, expected was between 0 and {1}", index, _numElements));
-
-                    return _buffer.Address.ElementAt<T>(index);
-                }
-            }
         }
 
         public struct PinnedObject : IDisposable
@@ -164,11 +159,15 @@ namespace OpenCL.Net
             return ptr.Increment(Marshal.SizeOf(typeof(T)));
         }
 
-        public static T ElementAt<T>(this IntPtr ptr, int index)
+        public static T ElementAt<T>(this IntPtr ptr, int index) where T: struct
         {
-            var offset = Marshal.SizeOf(typeof(T)) * index;
+            Type resultType = typeof(T);
+            resultType = resultType.IsEnum ? Enum.GetUnderlyingType(resultType) : resultType;
+            
+            var offset = Marshal.SizeOf(resultType) * index;
             var offsetPtr = ptr.Increment(offset);
-            return (T)Marshal.PtrToStructure(offsetPtr, typeof(T));
+
+            return (T)Marshal.PtrToStructure(offsetPtr, resultType);
         }
 
         public static ErrorCode OnError(this ErrorCode error, ErrorCode errorCode, Action<ErrorCode> action)
@@ -199,47 +198,5 @@ namespace OpenCL.Net
 
             return arr;
         }
-
-        public static InfoBuffer GetInfo<THandleType, TEnumType>(
-            GetInfoDelegate<THandleType, TEnumType> method, THandleType handle, TEnumType name, out ErrorCode error)
-        {
-            IntPtr paramSize;
-            error = method(handle, name, IntPtr.Zero, InfoBuffer.Empty, out paramSize);
-            if (error != ErrorCode.Success)
-                return InfoBuffer.Empty;
-
-            var buffer = new InfoBuffer(paramSize);
-            error = method(handle, name, paramSize, buffer, out paramSize);
-            if (error != ErrorCode.Success)
-                return InfoBuffer.Empty;
-
-            return buffer;
-        }
-
-        public static InfoBuffer GetInfo<THandle1Type, THandle2Type, TEnumType>(
-            GetInfoDelegate<THandle1Type, THandle2Type, TEnumType> method, THandle1Type handle1, THandle2Type handle2, TEnumType name, out ErrorCode error)
-        {
-            IntPtr paramSize;
-            error = method(handle1, handle2, name, IntPtr.Zero, InfoBuffer.Empty, out paramSize);
-            if (error != ErrorCode.Success)
-                return InfoBuffer.Empty;
-
-            var buffer = new InfoBuffer(paramSize);
-            error = method(handle1, handle2, name, paramSize, buffer, out paramSize);
-            if (error != ErrorCode.Success)
-                return InfoBuffer.Empty;
-
-            return buffer;
-        }
-
-        /*
-        public static InfoBufferArray<IntPtr> GetInfoArray<THandleType, TEnumType>(
-            GetInfoDelegate<THandleType, TEnumType> method, THandleType handle, TEnumType name, out ErrorCode error)
-        {
-            // Continue here ...
-        }
-        */
-
-        #endregion
     }
 }

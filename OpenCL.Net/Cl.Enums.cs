@@ -25,8 +25,6 @@ namespace OpenCL.Net
 {
     public static partial class Cl
     {
-        #region Enums
-
         public enum Bool : uint // cl_uint
         {
             False = 0,
@@ -262,7 +260,27 @@ namespace OpenCL.Net
             Log = 0x1183,
         };
 
-        #endregion
+        public enum BuildStatus : int // cl_int
+        {
+            Success = 0,
+            None = -1,
+            Error = -2,
+            InProgress = -3
+        };
 
+        [Flags]
+        public enum CommandQueueProperties : ulong // cl_ulong
+        { 
+            OutOfOrderExecModeEnable = (1 << 0),
+            ProfilingEnable = (1 << 1)
+        }
+
+        public enum CommandQueueInfo : int // cl_int
+        {
+            Context = 0x1090,
+            Device = 0x1091,
+            ReferenceCount = 0x1092,
+            Properties = 0x1093
+        }
     }
 }

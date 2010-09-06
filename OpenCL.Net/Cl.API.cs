@@ -39,10 +39,10 @@ namespace OpenCL.Net
 
         [DllImport(Library)]
         private static extern ErrorCode clGetPlatformIDs(cl_uint numEntries,
-                                                         [Out] [MarshalAs(UnmanagedType.LPArray)] PlatformId[] platforms,
+                                                         [Out] [MarshalAs(UnmanagedType.LPArray)] Platform[] platforms,
                                                          out cl_uint numPlatforms);
         public static ErrorCode GetPlatformIDs(cl_uint numEntries,
-                                               PlatformId[] platforms,
+                                               Platform[] platforms,
                                                out cl_uint numPlatforms)
         {
             return clGetPlatformIDs(numEntries, platforms, out numPlatforms);
@@ -54,7 +54,7 @@ namespace OpenCL.Net
                                                           IntPtr paramValueSize,
                                                           IntPtr paramValue,
                                                           out IntPtr paramValueSizeRet);
-        public static ErrorCode GetPlatformInfo(PlatformId platformId,
+        public static ErrorCode GetPlatformInfo(Platform platformId,
                                                 PlatformInfo paramName,
                                                 IntPtr paramValueBufferSize,
                                                 InfoBuffer paramValue,
@@ -71,12 +71,12 @@ namespace OpenCL.Net
         private static extern ErrorCode clGetDeviceIDs(IntPtr platform,
                                                        DeviceType deviceType,
                                                        cl_uint numEntries,
-                                                       [Out] [MarshalAs(UnmanagedType.LPArray)] DeviceId[] devices,
+                                                       [Out] [MarshalAs(UnmanagedType.LPArray)] Device[] devices,
                                                        out cl_uint numDevices);
-        public static ErrorCode GetDeviceIDs(PlatformId platform,
+        public static ErrorCode GetDeviceIDs(Platform platform,
                                              DeviceType deviceType,
                                              cl_uint numEntries,
-                                             DeviceId[] devices,
+                                             Device[] devices,
                                              out cl_uint numDevices)
         {
             return clGetDeviceIDs((platform as IHandle).Handle, deviceType, numEntries, devices, out numDevices);
@@ -88,7 +88,7 @@ namespace OpenCL.Net
                                                         IntPtr paramValueSize,
                                                         IntPtr paramValue,
                                                         out IntPtr paramValueSizeRet);
-        public static ErrorCode GetDeviceInfo(DeviceId device,
+        public static ErrorCode GetDeviceInfo(Device device,
                                               DeviceInfo paramName,
                                               IntPtr paramValueSize,
                                               InfoBuffer paramValue,
@@ -104,13 +104,13 @@ namespace OpenCL.Net
         [DllImport(Library)]
         private static extern IntPtr clCreateContext([In] [MarshalAs(UnmanagedType.LPArray)] ContextProperty[] properties,
                                                      cl_uint numDevices,
-                                                     [In] [MarshalAs(UnmanagedType.LPArray)] DeviceId[] devices,
+                                                     [In] [MarshalAs(UnmanagedType.LPArray)] Device[] devices,
                                                      ContextNotify pfnNotify,
                                                      IntPtr userData,
                                                      out ErrorCode errcodeRet);
         public static Context CreateContext(ContextProperty[] properties,
                                                cl_uint numDevices,
-                                               DeviceId[] devices,
+                                               Device[] devices,
                                                ContextNotify pfnNotify,
                                                IntPtr userData,
                                                out ErrorCode errcodeRet)
@@ -315,19 +315,20 @@ namespace OpenCL.Net
         [DllImport(Library)]
         private static extern IntPtr clCreateProgramWithBinary(IntPtr context,
                                                                cl_uint numDevices,
-                                                               [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt)] DeviceId[] deviceList,
+                                                               [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 1)] Device[] deviceList,
                                                                [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt)] IntPtr[] lengths,
                                                                [MarshalAs(UnmanagedType.LPArray)] IntPtr binaries,
                                                                [Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] ErrorCode[] binaryStatus,
                                                                out ErrorCode errcodeRet);
         public static Program CreateProgramWithBinary(Context context,
                                                          cl_uint numDevices,
-                                                         DeviceId[] deviceList,
+                                                         Device[] deviceList,
                                                          IntPtr[] lengths,
                                                          byte[][] binaries,
                                                          ErrorCode[] binaryStatus,
                                                          out ErrorCode errcodeRet)
         {
+            // TODO: Test with an implementation that supports this
             using (var binariesPtr = binaries.Pin())
                 return new Program(clCreateProgramWithBinary((context as IHandle).Handle, numDevices, deviceList, lengths, binariesPtr, binaryStatus, out errcodeRet));
         }
@@ -350,13 +351,13 @@ namespace OpenCL.Net
         [DllImport(Library)]
         private static extern ErrorCode clBuildProgram(IntPtr program,
                                                        cl_uint numDevices,
-                                                       [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 1)] DeviceId[] deviceList,
+                                                       [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 1)] Device[] deviceList,
                                                        [In] [MarshalAs(UnmanagedType.LPStr)] string options,
                                                        ProgramNotify pfnNotify,
                                                        IntPtr userData);
         public static ErrorCode BuildProgram(Program program,
                                              cl_uint numDevices,
-                                             DeviceId[] deviceList,
+                                             Device[] deviceList,
                                              string options,
                                              ProgramNotify pfnNotify,
                                              IntPtr userData)
@@ -387,13 +388,67 @@ namespace OpenCL.Net
                                                               IntPtr paramValue,
                                                               out IntPtr paramValueSizeRet);
         public static ErrorCode GetProgramBuildInfo(Program program,
-                                                    DeviceId device,
+                                                    Device device,
                                                     ProgramBuildInfo paramName,
                                                     IntPtr paramValueSize,
                                                     InfoBuffer paramValue,
                                                     out IntPtr paramValueSizeRet)
         {
             return clGetProgramBuildInfo((program as IHandle).Handle, (device as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+        }
+
+        #endregion
+
+        #region Command Queue API
+
+        [DllImport(Library)]
+        private static extern IntPtr clCreateCommandQueue(IntPtr context, IntPtr device,
+                                                          [MarshalAs(UnmanagedType.U8)] CommandQueueProperties properties,
+                                                          out ErrorCode error);
+        public static CommandQueue CreateCommandQueue(Context context, Device device, CommandQueueProperties properties, out ErrorCode error)
+        {
+            return new CommandQueue(clCreateCommandQueue((context as IHandle).Handle, (device as IHandle).Handle, properties, out error));
+        }
+
+        [DllImport(Library)]
+        private static extern ErrorCode clRetainCommandQueue(IntPtr commandQueue);
+        public static ErrorCode RetainCommandQueue(CommandQueue commandQueue)
+        {
+            return clRetainCommandQueue((commandQueue as IHandle).Handle);
+        }
+
+        [DllImport(Library)]
+        private static extern ErrorCode clReleaseCommandQueue(IntPtr commandQueue);
+        public static ErrorCode ReleaseCommandQueue(CommandQueue commandQueue)
+        {
+            return clReleaseCommandQueue((commandQueue as IHandle).Handle);
+        }
+
+        [DllImport(Library)]
+        private static extern ErrorCode clGetCommandQueueInfo(IntPtr commandQueue,
+                                                              [MarshalAs(UnmanagedType.U4)] CommandQueueInfo paramName,
+                                                              IntPtr paramValueSize,
+                                                              IntPtr paramValue,
+                                                              out IntPtr paramValueSizeRet);
+        public static ErrorCode GetCommandQueueInfo(CommandQueue commandQueue,
+                                                    CommandQueueInfo paramName,
+                                                    IntPtr paramValueSize,
+                                                    InfoBuffer paramValue,
+                                                    out IntPtr paramValueSizeRet)
+        {
+            return clGetCommandQueueInfo((commandQueue as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+        }
+
+        [DllImport(Library)]
+        private static extern ErrorCode clSetCommandQueueProperty(IntPtr commandQueue,
+                                                                  [MarshalAs(UnmanagedType.U8)] CommandQueueProperties properties,
+                                                                  bool enable, 
+                                                                  [MarshalAs(UnmanagedType.U8)] out CommandQueueProperties oldProperties);
+        public static ErrorCode SetCommandQueueProperty(CommandQueue commandQueue,
+                                                        CommandQueueProperties properties,
+                                                        bool enable, out CommandQueueProperties oldProperties)
+        {
+            return clSetCommandQueueProperty((commandQueue as IHandle).Handle, properties, enable, out oldProperties);
         }
 
         #endregion

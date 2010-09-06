@@ -25,8 +25,6 @@ namespace OpenCL.Net
 {
     public static partial class Cl
     {
-        #region Delegates and events
-
         public delegate void ContextNotify(string errInfo, byte[] data, IntPtr cb, IntPtr userData);
         public delegate void ProgramNotify(Program program, IntPtr userData);
         public delegate void NativeKernel(IntPtr args);
@@ -45,7 +43,5 @@ namespace OpenCL.Net
                                                                                          IntPtr paramValueSize,
                                                                                          InfoBuffer buffer,
                                                                                          out IntPtr paramValueSizeRet);
-
-        #endregion
     }
 }
