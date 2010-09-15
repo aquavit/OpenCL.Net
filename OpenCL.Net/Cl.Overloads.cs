@@ -145,5 +145,57 @@ namespace OpenCL.Net
         }
 
         #endregion
+
+        #region Kernel Object API
+
+        public static Kernel[] CreateKernelsInProgram(Program program, out ErrorCode error)
+        {
+            uint numKernelsRet;
+            error = CreateKernelsInProgram(program, 0, null, out numKernelsRet);
+            if (error != Cl.ErrorCode.Success)
+                return null;
+
+            var result = new Kernel[numKernelsRet];
+            error = CreateKernelsInProgram(program, numKernelsRet, result, out numKernelsRet);
+            if (error != Cl.ErrorCode.Success)
+                return null;
+
+            return result;
+        }
+
+        public static InfoBuffer GetKernelInfo(Kernel kernel, KernelInfo paramName, out ErrorCode error)
+        {
+            return GetInfo(GetKernelInfo, kernel, paramName, out error);
+        }
+
+        public static InfoBuffer GetKernelWorkGroupInfo(Kernel kernel, Device device, KernelWorkGroupInfo paramName, out ErrorCode error)
+        {
+            return GetInfo(GetKernelWorkGroupInfo, kernel, device, paramName, out error);
+        }
+
+        #endregion
+
+        #region Event object API
+
+        public static InfoBuffer GetEventInfo(Event e, EventInfo paramName, out ErrorCode error)
+        {
+            return GetInfo(GetEventInfo, e, paramName, out error);
+        }
+
+        #endregion
+
+        #region Sampler API
+
+        public static InfoBuffer GetSamplerInfo(Sampler sampler, SamplerInfo paramName, out ErrorCode error)
+        {
+            return GetInfo(GetSamplerInfo, sampler, paramName, out error);
+        }
+
+        #endregion
+
+        public static InfoBuffer GetEventProfilingInfo(Event e, ProfilingInfo paramName, out ErrorCode error)
+        {
+            return GetInfo(GetEventProfilingInfo, e, paramName, out error);
+        }
     }
 }

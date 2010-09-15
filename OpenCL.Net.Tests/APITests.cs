@@ -244,61 +244,6 @@ namespace OpenCL.Net.Tests
         }
 
         [Test]
-        public void ProgramObjectTests()
-        {
-            const string correctKernel = @"
-                // Simple test; c[i] = a[i] + b[i]
-
-                __kernel void add_array(__global float *a, __global float *b, __global float *c)
-                {
-                    int xid = get_global_id(0);
-                    c[xid] = a[xid] + b[xid];
-                }";
-            const string kernelWithErrors = @"
-                // Erroneous kernel
-
-                __kernel void add_array(__global float *a, __global float *b, __global float *c)
-                {
-                    foo(); // <-- Error right here!
-                    int xid = get_global_id(0);
-                    c[xid] = a[xid] + b[xid];
-                }";
-
-            Cl.ErrorCode error;
-
-            using (Cl.Program program = Cl.CreateProgramWithSource(_context, 1, new[] { correctKernel }, null, out error))
-            {
-                Assert.AreEqual(error, Cl.ErrorCode.Success);
-
-                error = Cl.BuildProgram(program, 1, new[] { _device }, string.Empty, null, IntPtr.Zero);
-                Assert.AreEqual(Cl.ErrorCode.Success, error);
-
-                Assert.AreEqual(Cl.GetProgramBuildInfo(program, _device, Cl.ProgramBuildInfo.Status, out error).CastTo<Cl.BuildStatus>(), Cl.BuildStatus.Success);
-
-                // Try to get information from the program
-                Assert.AreEqual(Cl.GetProgramInfo(program, Cl.ProgramInfo.Context, out error).CastTo<Cl.Context>(), _context);
-                Assert.AreEqual(Cl.GetProgramInfo(program, Cl.ProgramInfo.NumDevices, out error).CastTo<int>(), 1);
-                Assert.AreEqual(Cl.GetProgramInfo(program, Cl.ProgramInfo.Devices, out error).CastTo<Cl.Device>(0), _device);
-
-                Console.WriteLine("Program source was:");
-                Console.WriteLine(Cl.GetProgramInfo(program, Cl.ProgramInfo.Source, out error));
-            }
-            
-            using (Cl.Program program = Cl.CreateProgramWithSource(_context, 1, new[] { kernelWithErrors }, null, out error))
-            {
-                Assert.AreEqual(error, Cl.ErrorCode.Success);
-
-                error = Cl.BuildProgram(program, 1, new[] { _device }, string.Empty, null, IntPtr.Zero);
-                Assert.AreNotEqual(Cl.ErrorCode.Success, error);
-
-                Assert.AreEqual(Cl.GetProgramBuildInfo(program, _device, Cl.ProgramBuildInfo.Status, out error).CastTo<Cl.BuildStatus>(), Cl.BuildStatus.Error);
-
-                Console.WriteLine("There were error(s) compiling the provided kernel");
-                Console.WriteLine(Cl.GetProgramBuildInfo(program, _device, Cl.ProgramBuildInfo.Log, out error));
-            }
-        }
-
-        [Test]
         public void CommandQueueAPI()
         {
             Cl.ErrorCode error;
@@ -318,6 +263,81 @@ namespace OpenCL.Net.Tests
                 Assert.AreEqual(Cl.GetCommandQueueInfo(commandQueue, Cl.CommandQueueInfo.Device, out error).CastTo<Cl.Device>(), _device);
                 Assert.AreEqual(Cl.GetCommandQueueInfo(commandQueue, Cl.CommandQueueInfo.Properties, out error).CastTo<Cl.CommandQueueProperties>(),
                     Cl.CommandQueueProperties.OutOfOrderExecModeEnable);
+            }
+        }
+
+        [Test]
+        public void ProgramAndKernelTests()
+        {
+            const string correctSource = @"
+                // Simple test; c[i] = a[i] + b[i]
+
+                __kernel void add_array(__global float *a, __global float *b, __global float *c)
+                {
+                    int xid = get_global_id(0);
+                    c[xid] = a[xid] + b[xid];
+                }
+                
+                __kernel void sub_array(__global float *a, __global float *b, __global float *c)
+                {
+                    int xid = get_global_id(0);
+                    c[xid] = a[xid] - b[xid];
+                }
+
+                ";
+            const string sourceWithErrors = @"
+                // Erroneous kernel
+
+                __kernel void add_array(__global float *a, __global float *b, __global float *c)
+                {
+                    foo(); // <-- Error right here!
+                    int xid = get_global_id(0);
+                    c[xid] = a[xid] + b[xid];
+                }";
+
+            Cl.ErrorCode error;
+
+
+            using (Cl.Program program = Cl.CreateProgramWithSource(_context, 1, new[] { sourceWithErrors }, null, out error))
+            {
+                Assert.AreEqual(error, Cl.ErrorCode.Success);
+
+                error = Cl.BuildProgram(program, 1, new[] { _device }, string.Empty, null, IntPtr.Zero);
+                Assert.AreNotEqual(Cl.ErrorCode.Success, error);
+
+                Assert.AreEqual(Cl.GetProgramBuildInfo(program, _device, Cl.ProgramBuildInfo.Status, out error).CastTo<Cl.BuildStatus>(), Cl.BuildStatus.Error);
+
+                Console.WriteLine("There were error(s) compiling the provided kernel");
+                Console.WriteLine(Cl.GetProgramBuildInfo(program, _device, Cl.ProgramBuildInfo.Log, out error));
+            }
+
+            using (Cl.Program program = Cl.CreateProgramWithSource(_context, 1, new[] { correctSource }, null, out error))
+            {
+                Assert.AreEqual(error, Cl.ErrorCode.Success);
+
+                error = Cl.BuildProgram(program, 1, new[] { _device }, string.Empty, null, IntPtr.Zero);
+                Assert.AreEqual(Cl.ErrorCode.Success, error);
+
+                Assert.AreEqual(Cl.GetProgramBuildInfo(program, _device, Cl.ProgramBuildInfo.Status, out error).CastTo<Cl.BuildStatus>(), Cl.BuildStatus.Success);
+
+                // Try to get information from the program
+                Assert.AreEqual(Cl.GetProgramInfo(program, Cl.ProgramInfo.Context, out error).CastTo<Cl.Context>(), _context);
+                Assert.AreEqual(Cl.GetProgramInfo(program, Cl.ProgramInfo.NumDevices, out error).CastTo<int>(), 1);
+                Assert.AreEqual(Cl.GetProgramInfo(program, Cl.ProgramInfo.Devices, out error).CastTo<Cl.Device>(0), _device);
+
+                Console.WriteLine("Program source was:");
+                Console.WriteLine(Cl.GetProgramInfo(program, Cl.ProgramInfo.Source, out error));
+
+                Cl.Kernel kernel = Cl.CreateKernel(program, "add_array", out error);
+                Assert.AreEqual(error, Cl.ErrorCode.Success);
+
+                kernel.Dispose();
+
+                Cl.Kernel[] kernels = Cl.CreateKernelsInProgram(program, out error);
+                Assert.AreEqual(error, Cl.ErrorCode.Success);
+                Assert.AreEqual(kernels.Length, 2);
+                Assert.AreEqual("add_array", Cl.GetKernelInfo(kernels[0], Cl.KernelInfo.FunctionName, out error).ToString());
+                Assert.AreEqual("sub_array", Cl.GetKernelInfo(kernels[1], Cl.KernelInfo.FunctionName, out error).ToString());
             }
         }
     }

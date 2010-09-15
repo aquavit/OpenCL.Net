@@ -32,11 +32,6 @@ namespace OpenCL.Net
             {
                 get;
             }
-
-            IntPtr Zero
-            {
-                get;
-            }
         }
 
         internal interface IRefCountedHandle : IHandle, IDisposable
@@ -64,14 +59,6 @@ namespace OpenCL.Net
                 }
             }
 
-            public IntPtr Zero
-            {
-                get
-                {
-                    return IntPtr.Zero;
-                }
-            }
-
             #endregion
         }
 
@@ -92,14 +79,6 @@ namespace OpenCL.Net
                 get
                 {
                     return _handle;
-                }
-            }
-
-            public IntPtr Zero
-            {
-                get
-                {
-                    return IntPtr.Zero;
                 }
             }
 
@@ -194,19 +173,11 @@ namespace OpenCL.Net
                 }
             }
 
-            public IntPtr Zero
-            {
-                get
-                {
-                    return IntPtr.Zero;
-                }
-            }
-
             #endregion
 
             #region IRefCountedHandle Members
 
-            public void Retain()
+            void IRefCountedHandle.Retain()
             {
                 RetainContext(this);
             }
@@ -235,7 +206,7 @@ namespace OpenCL.Net
 
             #region IRefCountedHandle Members
 
-            public void Retain()
+            void IRefCountedHandle.Retain()
             {
                 RetainMemObject(this);
             }
@@ -249,14 +220,6 @@ namespace OpenCL.Net
                 get
                 {
                     return _handle;
-                }
-            }
-
-            public IntPtr Zero
-            {
-                get
-                {
-                    return IntPtr.Zero;
                 }
             }
 
@@ -284,7 +247,7 @@ namespace OpenCL.Net
 
             #region IRefCountedHandle Members
 
-            public void Retain()
+            void IRefCountedHandle.Retain()
             {
                 RetainProgram(this);
             }
@@ -298,14 +261,6 @@ namespace OpenCL.Net
                 get
                 {
                     return _handle;
-                }
-            }
-
-            public IntPtr Zero
-            {
-                get
-                {
-                    return IntPtr.Zero;
                 }
             }
 
@@ -333,7 +288,7 @@ namespace OpenCL.Net
             
             #region IRefCountedHandle Members
 
-            public void Retain()
+            void IRefCountedHandle.Retain()
             {
                 RetainCommandQueue(this);
             }
@@ -350,11 +305,44 @@ namespace OpenCL.Net
                 }
             }
 
-            public IntPtr Zero
+            #endregion
+
+            #region IDisposable Members
+
+            public void Dispose()
+            {
+                ReleaseCommandQueue(this);
+            }
+
+            #endregion
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Kernel : IRefCountedHandle
+        {
+            private readonly IntPtr _handle;
+
+            internal Kernel(IntPtr handle)
+            {
+                _handle = handle;
+            }
+
+            #region IRefCountedHandle Members
+
+            void IRefCountedHandle.Retain()
+            {
+                RetainKernel(this);
+            }
+
+            #endregion
+
+            #region IHandle Members
+
+            IntPtr IHandle.Handle
             {
                 get
                 {
-                    return IntPtr.Zero;
+                    return _handle;
                 }
             }
 
@@ -364,7 +352,89 @@ namespace OpenCL.Net
 
             public void Dispose()
             {
-                ReleaseCommandQueue(this);
+                ReleaseKernel(this);
+            }
+
+            #endregion
+        }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Event : IRefCountedHandle
+        {
+            private readonly IntPtr _handle;
+
+            internal Event(IntPtr handle)
+            {
+                _handle = handle;
+            }
+
+            #region IRefCountedHandle Members
+
+            void IRefCountedHandle.Retain()
+            {
+                RetainEvent(this);
+            }
+
+            #endregion
+
+            #region IHandle Members
+
+            IntPtr IHandle.Handle
+            {
+                get
+                {
+                    return _handle;
+                }
+            }
+
+            #endregion
+
+            #region IDisposable Members
+
+            public void Dispose()
+            {
+                ReleaseEvent(this);
+            }
+
+            #endregion
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Sampler : IRefCountedHandle
+        {
+            private readonly IntPtr _handle;
+
+            internal Sampler(IntPtr handle)
+            {
+                _handle = handle;
+            }
+
+            #region IRefCountedHandle Members
+
+            void IRefCountedHandle.Retain()
+            {
+                RetainSampler(this);
+            }
+
+            #endregion
+
+            #region IHandle Members
+
+            IntPtr IHandle.Handle
+            {
+                get
+                {
+                    return _handle;
+                }
+            }
+
+            #endregion
+
+            #region IDisposable Members
+
+            public void Dispose()
+            {
+                ReleaseSampler(this);
             }
 
             #endregion

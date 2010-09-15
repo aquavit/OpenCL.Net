@@ -282,5 +282,75 @@ namespace OpenCL.Net
             ReferenceCount = 0x1092,
             Properties = 0x1093
         }
+
+        public enum KernelInfo : int // cl_int
+        {
+            FunctionName = 0x1190,
+            NumArgs = 0x1191,
+            ReferenceCount = 0x1192,
+            Context = 0x1193,
+            Program = 0x1194
+        }
+
+        public enum KernelWorkGroupInfo : int // cl_int
+        {
+            WorkGroupSize = 0x11B0,
+            CompileWorkGroupSize = 0x11B1,
+            LocalMemSize = 0x11B2
+        };
+
+        [Flags]
+        public enum MapFlags: int // cl_int
+        {
+            Read = (1 << 0),
+            Write = (1 << 1),
+        };
+
+        public enum EventInfo: int // cl_int
+        {
+            CommandQueue = 0x11D0,
+            CommandType = 0x11D1,
+            ReferenceCount = 0x11D2,
+            CommandExecutionStatus = 0x11D3,
+        };
+
+        public enum ExecutionStatus: int // cl_int
+        {
+            Complete = 0x0,
+            Running = 0x1,
+            Submitted = 0x2,
+            Queued = 0x3,
+        };
+
+        public enum AddressingMode : uint // cl_uint
+        {
+            None = 0x1130,
+            ClampToEdge = 0x1131,
+            Clamp = 0x1132,
+            Repeat = 0x1133,
+        };
+
+        public enum FilterMode : uint // cl_uint
+        {
+            Nearest = 0x1140,
+            Linear = 0x1141,
+        };
+
+        public enum SamplerInfo : uint // cl_uint
+        {
+            ReferenceCount = 0x1150,
+            Context = 0x1151,
+            NormalizedCoords = 0x1152,
+            AddressingMode = 0x1153,
+            FilterMode = 0x1154,
+        };
+
+        public enum ProfilingInfo: int // cl_int
+        {
+            Queued = 0x1280,
+            Submit = 0x1281,
+            Start = 0x1282,
+            End = 0x1283,
+        };
     }
 }
