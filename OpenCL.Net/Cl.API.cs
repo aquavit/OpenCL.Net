@@ -812,9 +812,9 @@ namespace OpenCL.Net
         private static extern ErrorCode clEnqueueNDRangeKernel(IntPtr commandQueue,
                                                                IntPtr kernel,
                                                                uint workDim,
-                                                               [In] [MarshalAs(UnmanagedType.LPArray, SizeConst = 3)] IntPtr[] globalWorkOffset,
-                                                               [In] [MarshalAs(UnmanagedType.LPArray, SizeConst = 3)] IntPtr[] globalWorkSize,
-                                                               [In] [MarshalAs(UnmanagedType.LPArray, SizeConst = 3)] IntPtr[] localWorkSize,
+                                                               [In] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] IntPtr[] globalWorkOffset,
+                                                               [In] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] IntPtr[] globalWorkSize,
+                                                               [In] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] IntPtr[] localWorkSize,
                                                                uint numEventsInWaitList,
                                                                [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 6)] Event[] eventWaitList,
                                                                [Out] [MarshalAs(UnmanagedType.SysUInt)] out Event e);
