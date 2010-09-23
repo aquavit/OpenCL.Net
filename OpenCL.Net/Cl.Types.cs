@@ -60,6 +60,11 @@ namespace OpenCL.Net
             }
 
             #endregion
+
+            public static implicit operator IntPtr(Platform platform)
+            {
+                return platform._handle;
+            }
         }
 
         [StructLayout(LayoutKind.Sequential)]

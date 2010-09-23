@@ -132,10 +132,9 @@ namespace OpenCL.Net.Tests
                             select platform).First(), Cl.DeviceType.Gpu, out error)
                           select dev).First();
 
+            uint refCount;
             using (Cl.Context context = Cl.CreateContext(null, 1, new[] { device }, null, IntPtr.Zero, out error))
-            {
-                var refCount = Cl.GetContextInfo(context, Cl.ContextInfo.ReferenceCount, out error).CastTo<uint>();
-            }
+                refCount = Cl.GetContextInfo(context, Cl.ContextInfo.ReferenceCount, out error).CastTo<uint>();
         }
     }
 
