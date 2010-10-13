@@ -271,6 +271,7 @@ namespace OpenCL.Net
         [Flags]
         public enum CommandQueueProperties : ulong // cl_ulong
         { 
+            None = 0,
             OutOfOrderExecModeEnable = (1 << 0),
             ProfilingEnable = (1 << 1)
         }

@@ -23,6 +23,7 @@ using System;
 using System.Linq;
 
 using NUnit.Framework;
+using System.Runtime.InteropServices;
 
 namespace OpenCL.Net.Tests
 {
@@ -128,7 +129,6 @@ namespace OpenCL.Net.Tests
             // Select the device we want
             var device = (from dev in Cl.GetDeviceIDs(
                             (from platform in Cl.GetPlatformIDs(out error)
-                            where Cl.GetPlatformInfo(platform, Cl.PlatformInfo.Name, out error).ToString() == "NVIDIA CUDA"
                             select platform).First(), Cl.DeviceType.Gpu, out error)
                           select dev).First();
 
@@ -337,6 +337,114 @@ namespace OpenCL.Net.Tests
                 Assert.AreEqual(kernels.Length, 2);
                 Assert.AreEqual("add_array", Cl.GetKernelInfo(kernels[0], Cl.KernelInfo.FunctionName, out error).ToString());
                 Assert.AreEqual("sub_array", Cl.GetKernelInfo(kernels[1], Cl.KernelInfo.FunctionName, out error).ToString());
+            }
+        }
+
+        [Test]
+        // Partially from OpenTK demo - Submitted by "mfagerlund"
+        public void AddArrayAddsCorrectly()
+        {
+            const string correctSource = @"
+                // Simple test; c[i] = a[i] + b[i]
+
+                __kernel void add_array(__global float *a, __global float *b, __global float *c)
+                {
+                    int xid = get_global_id(0);
+                    c[xid] = a[xid] + b[xid];
+                }
+                
+                __kernel void sub_array(__global float *a, __global float *b, __global float *c)
+                {
+                    int xid = get_global_id(0);
+                    c[xid] = a[xid] - b[xid];
+                }
+
+                ";
+
+            Cl.ErrorCode error;
+
+            using (Cl.Program program = Cl.CreateProgramWithSource(_context, 1, new[] { correctSource }, null, out error))
+            {
+                Assert.AreEqual(error, Cl.ErrorCode.Success);
+                error = Cl.BuildProgram(program, 1, new[] { _device }, string.Empty, null, IntPtr.Zero);
+                Assert.AreEqual(Cl.ErrorCode.Success, error);
+                Assert.AreEqual(Cl.GetProgramBuildInfo(program, _device, Cl.ProgramBuildInfo.Status, out error).CastTo<Cl.BuildStatus>(), Cl.BuildStatus.Success);
+
+                Cl.Kernel[] kernels = Cl.CreateKernelsInProgram(program, out error);
+                Cl.Kernel kernel = kernels[0];
+
+                const int cnBlockSize = 4;
+                const int cnBlocks = 3;
+                IntPtr cnDimension = new IntPtr(cnBlocks * cnBlockSize);
+
+                // allocate host  vectors
+                float[] A = new float[cnDimension.ToInt32()];
+                float[] B = new float[cnDimension.ToInt32()];
+                float[] C = new float[cnDimension.ToInt32()];
+
+                // initialize host memory
+                Random rand = new Random();
+                for (int i = 0; i < A.Length; i++)
+                {
+                    A[i] = rand.Next() % 256;
+                    B[i] = rand.Next() % 256;
+                }
+
+                Cl.Mem hDeviceMemA = Cl.CreateBuffer(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, (IntPtr)(sizeof(float) * cnDimension.ToInt32()), A, out error);
+                Assert.AreEqual(Cl.ErrorCode.Success, error);
+                Cl.Mem hDeviceMemB = Cl.CreateBuffer(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, (IntPtr)(sizeof(float) * cnDimension.ToInt32()), B, out error);
+                Assert.AreEqual(Cl.ErrorCode.Success, error);
+                Cl.Mem hDeviceMemC = Cl.CreateBuffer(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.WriteOnly, (IntPtr)(sizeof(float) * cnDimension.ToInt32()), IntPtr.Zero, out error);
+                Assert.AreEqual(Cl.ErrorCode.Success, error);
+
+                Cl.CommandQueue cmdQueue = Cl.CreateCommandQueue(_context, _device, (Cl.CommandQueueProperties)0, out error);
+
+                Cl.Event clevent;
+
+                int intPtrSize = 0;
+                intPtrSize = Marshal.SizeOf(typeof(IntPtr));
+
+                // setup parameter values
+                error = Cl.SetKernelArg(kernel, 0, new IntPtr(intPtrSize), hDeviceMemA);
+                Assert.AreEqual(Cl.ErrorCode.Success, error);
+                error = Cl.SetKernelArg(kernel, 1, new IntPtr(intPtrSize), hDeviceMemB);
+                Assert.AreEqual(Cl.ErrorCode.Success, error);
+                error = Cl.SetKernelArg(kernel, 2, new IntPtr(intPtrSize), hDeviceMemC);
+                Assert.AreEqual(Cl.ErrorCode.Success, error);
+
+                // write data from host to device
+                error = Cl.EnqueueWriteBuffer(cmdQueue, hDeviceMemA, Cl.Bool.True, IntPtr.Zero,
+                    new IntPtr(cnDimension.ToInt32() * sizeof(float)),
+                    A, 0, null, out clevent);
+                Assert.AreEqual(Cl.ErrorCode.Success, error);
+                error = Cl.EnqueueWriteBuffer(cmdQueue, hDeviceMemB, Cl.Bool.True, IntPtr.Zero,
+                    new IntPtr(cnDimension.ToInt32() * sizeof(float)),
+                    B, 0, null, out clevent);
+                Assert.AreEqual(Cl.ErrorCode.Success, error);
+
+                // execute kernel
+                error = Cl.EnqueueNDRangeKernel(cmdQueue, kernel, 1, null, new IntPtr[] { cnDimension }, null, 0, null, out clevent);
+                Assert.AreEqual(Cl.ErrorCode.Success, error, error.ToString());
+
+                // copy results from device back to host
+                IntPtr event_handle = IntPtr.Zero;
+
+                error = Cl.EnqueueReadBuffer(
+                    cmdQueue, hDeviceMemC, Cl.Bool.True, IntPtr.Zero,
+                    new IntPtr(cnDimension.ToInt32() * sizeof(float)),
+                    C, 0, null, out clevent);
+                Assert.AreEqual(Cl.ErrorCode.Success, error, error.ToString());
+
+                for (int i = 0; i < A.Length; i++)
+                {
+                    Assert.That(A[i] + B[i], Is.EqualTo(C[i]));
+                }
+
+                Cl.Finish(cmdQueue);
+
+                Cl.ReleaseMemObject(hDeviceMemA);
+                Cl.ReleaseMemObject(hDeviceMemB);
+                Cl.ReleaseMemObject(hDeviceMemC);
             }
         }
     }

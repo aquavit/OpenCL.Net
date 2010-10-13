@@ -22,6 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Collections;
 
 namespace OpenCL.Net
 {
@@ -123,6 +124,70 @@ namespace OpenCL.Net
             }
 
             #endregion
+        }
+
+        // TODO: Figure out how to use segments of large arrays well ...
+        // Or should we ditch this problem and let the user handle it?
+        public sealed class ArraySegment<T>: IEnumerable<T>
+        {
+            private readonly T[] _array;
+            private readonly int _index;
+            private readonly int _count;
+            
+            internal ArraySegment(T[] array, int index, int count)
+            {
+                if (array == null)
+                    throw new ArgumentNullException("array");
+                if (index > array.Length)
+                    throw new IndexOutOfRangeException("index");
+                if (index + count > array.Length)
+                    throw new ArgumentOutOfRangeException("count");
+
+                _index = index;
+                _count = count;
+                
+                _array = array;
+            }
+
+            public T this[int index]
+            {
+                get
+                { 
+                    if ((index < 0) || (index > _count) || (_index + index > _array.Length))
+                        throw new IndexOutOfRangeException("index");
+
+                    return _array[_index + index];
+                }
+            }
+
+            public int Length
+            {
+                get
+                {
+                    return _count;
+                }
+            }
+
+            public IEnumerator<T> GetEnumerator()
+            {
+                for (int i = _index; i < _count; i++)
+                    yield return _array[i];
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
+
+            public static implicit operator T[](ArraySegment<T> segment)
+            {
+                return segment._array;
+            }
+
+            public static implicit operator ArraySegment<T>(T[] array)
+            {
+                return new ArraySegment<T>(array, 0, array.Length);
+            }
         }
 
         public struct PinnedObject : IDisposable
