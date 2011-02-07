@@ -162,11 +162,19 @@ namespace OpenCL.Net
         #region Memory Object API
 
         [DllImport(Library)]
-        private static extern IntPtr clCreateBuffer(IntPtr context, MemFlags flags, IntPtr size, IntPtr hostPtr, out ErrorCode errcodeRet);
+        private static extern IntPtr clCreateBuffer(IntPtr context, 
+                                                    [MarshalAs(UnmanagedType.U8)] MemFlags flags, 
+                                                    IntPtr size, IntPtr hostPtr,
+                                                    [Out] [MarshalAs(UnmanagedType.I4)] out ErrorCode errcodeRet);
         public static Mem CreateBuffer(Context context, MemFlags flags, IntPtr size, object hostData, out ErrorCode errcodeRet)
         {
             using (var hostPtr = hostData.Pin())
                 return new Mem(clCreateBuffer((context as IHandle).Handle, flags, size, hostPtr, out errcodeRet));
+        }
+
+        public static Mem CreateBuffer(Context context, MemFlags flags, IntPtr size, IntPtr hostPtr, out ErrorCode errcodeRet)
+        {
+            return new Mem(clCreateBuffer((context as IHandle).Handle, flags, size, hostPtr, out errcodeRet));
         }
 
         [DllImport(Library)]
@@ -222,6 +230,18 @@ namespace OpenCL.Net
             using (var imageFormatPtr = imageFormat.Pin())
                 return new Mem(clCreateImage2D((context as IHandle).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageRowPitch, hostPtr, out errorcodeRet));
         }
+        public static Mem CreateImage2D(Context context,
+                                        MemFlags flags,
+                                        ImageFormat imageFormat,
+                                        IntPtr imageWidth,
+                                        IntPtr imageHeight,
+                                        IntPtr imageRowPitch,
+                                        IntPtr hostPtr,
+                                        out ErrorCode errorcodeRet)
+        {
+            using (var imageFormatPtr = imageFormat.Pin())
+                return new Mem(clCreateImage2D((context as IHandle).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageRowPitch, hostPtr, out errorcodeRet));
+        }
 
         [DllImport(Library)]
         private static extern IntPtr clCreateImage3D(IntPtr context,
@@ -246,6 +266,20 @@ namespace OpenCL.Net
                                         out ErrorCode errcodeRet)
         {
             using (var hostPtr = hostData.Pin())
+            using (var imageFormatPtr = imageFormat.Pin())
+                return new Mem(clCreateImage3D((context as IHandle).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageDepth, imageRowPitch, imageSlicePitch, hostPtr, out errcodeRet));
+        }
+        public static Mem CreateImage3D(Context context,
+                                        MemFlags flags,
+                                        ImageFormat imageFormat,
+                                        IntPtr imageWidth,
+                                        IntPtr imageHeight,
+                                        IntPtr imageDepth,
+                                        IntPtr imageRowPitch,
+                                        IntPtr imageSlicePitch,
+                                        IntPtr hostPtr,
+                                        out ErrorCode errcodeRet)
+        {
             using (var imageFormatPtr = imageFormat.Pin())
                 return new Mem(clCreateImage3D((context as IHandle).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageDepth, imageRowPitch, imageSlicePitch, hostPtr, out errcodeRet));
         }
