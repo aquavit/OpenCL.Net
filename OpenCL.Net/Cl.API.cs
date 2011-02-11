@@ -163,7 +163,7 @@ namespace OpenCL.Net
 
         [DllImport(Library)]
         private static extern IntPtr clCreateBuffer(IntPtr context, 
-                                                    [MarshalAs(UnmanagedType.U8)] MemFlags flags, 
+                                                    MemFlags flags, 
                                                     IntPtr size, IntPtr hostPtr,
                                                     [Out] [MarshalAs(UnmanagedType.I4)] out ErrorCode errcodeRet);
         public static Mem CreateBuffer(Context context, MemFlags flags, IntPtr size, object hostData, out ErrorCode errcodeRet)
