@@ -344,22 +344,22 @@ namespace OpenCL.Net
         [DllImport(Library)]
         private static extern IntPtr clCreateProgramWithBinary(IntPtr context,
                                                                cl_uint numDevices,
-                                                               [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 1)] Device[] deviceList,
-                                                               [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt)] IntPtr[] lengths,
-                                                               [MarshalAs(UnmanagedType.LPArray)] IntPtr binaries,
-                                                               [Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] ErrorCode[] binaryStatus,
+                                                               [In] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1, ArraySubType = UnmanagedType.SysUInt)] Device[] deviceList,
+                                                               [In] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1, ArraySubType = UnmanagedType.SysUInt)] IntPtr[] lengths,
+                                                               [In] [MarshalAs(UnmanagedType.SysUInt)] IntPtr binaries,
+                                                               [Out] [MarshalAs(UnmanagedType.SysUInt)] IntPtr binaryStatus,
                                                                out ErrorCode errcodeRet);
         public static Program CreateProgramWithBinary(Context context,
                                                          cl_uint numDevices,
                                                          Device[] deviceList,
                                                          IntPtr[] lengths,
-                                                         byte[][] binaries,
-                                                         ErrorCode[] binaryStatus,
+                                                         InfoBufferArray binaries,
+                                                         InfoBufferArray<ErrorCode> binariesStatus,
                                                          out ErrorCode errcodeRet)
         {
-            // TODO: Test with an implementation that supports this
-            using (var binariesPtr = binaries.Pin())
-                return new Program(clCreateProgramWithBinary((context as IHandle).Handle, numDevices, deviceList, lengths, binariesPtr, binaryStatus, out errcodeRet));
+            using (var binariesPtr = binaries.Array.Pin())
+            using (var binariesStatusPtr = binariesStatus.Array.Pin())
+                return new Program(clCreateProgramWithBinary((context as IHandle).Handle, numDevices, deviceList, lengths, binariesPtr, binariesStatusPtr, out errcodeRet));
         }
 
         [DllImport(Library)]
@@ -406,7 +406,18 @@ namespace OpenCL.Net
                                                InfoBuffer paramValue,
                                                out IntPtr paramValueSizeRet)
         {
-            return clGetProgramInfo((program as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+             return clGetProgramInfo((program as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+        }
+
+        public static ErrorCode GetProgramInfo(Program program,
+                                               ProgramInfo paramName,
+                                               IntPtr paramValueSize,
+                                               InfoBufferArray paramValues,
+                                               out IntPtr paramValueSizeRet)
+        {
+            using (var paramValuesPtr = paramValues.Array.Pin())
+                return clGetProgramInfo((program as IHandle).Handle, paramName, paramValueSize, paramValuesPtr,
+                                        out paramValueSizeRet);
         }
 
         [DllImport(Library)]

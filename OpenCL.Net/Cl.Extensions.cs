@@ -77,6 +77,10 @@ namespace OpenCL.Net
                 {
                     return _buffer;
                 }
+                set
+                {
+                    _buffer = value;
+                }
             }
 
             public T CastTo<T>() where T: struct
@@ -93,6 +97,15 @@ namespace OpenCL.Net
             {
                 foreach (int index in indices)
                     yield return _buffer.ElementAt<T>(index);
+            }
+
+            public T[] CastToArray<T>(int length) where T: struct
+            {
+                var result = new T[length];
+                for (int i = 0; i < length; i++)
+                    result[i] = _buffer.ElementAt<T>(i);
+
+                return result;
             }
 
             public override string ToString()
@@ -120,6 +133,123 @@ namespace OpenCL.Net
             }
 
             #endregion
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct InfoBufferArray : IDisposable
+        {
+            private readonly IntPtr[] _buffers;
+
+            internal IntPtr[] Array
+            {
+                get
+                {
+                    return _buffers;
+                }
+            }
+
+            public InfoBufferArray(InfoBuffer[] buffers)
+            {
+                _buffers = new IntPtr[buffers.Length];
+                for (int i = 0; i < buffers.Length; i++)
+                    _buffers[i] = buffers[i].Address;
+            }
+
+            public InfoBuffer this[int index]
+            {
+                get
+                {
+                    return new InfoBuffer
+                               {
+                                   Address = _buffers[index]
+                               };
+                }
+            }
+
+            public int Length
+            {
+                get
+                {
+                    return _buffers.Length;
+                }
+            }
+
+            public IntPtr Size
+            {
+                get
+                {
+                    return (IntPtr)(_buffers.Length * IntPtr.Size);
+                }
+            }
+
+            public void Dispose()
+            {
+                for (int i = 0; i < _buffers.Length; i++)
+                    new InfoBuffer
+                        {
+                            Address = _buffers[i]
+                        }.Dispose();
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct InfoBufferArray<T>: IDisposable
+            where T: struct
+        {
+            private static readonly IntPtr size = typeof(T).IsEnum ? (IntPtr)Marshal.SizeOf(Enum.GetUnderlyingType(typeof(T))) : (IntPtr)Marshal.SizeOf(typeof(T));
+            
+            private readonly IntPtr[] _buffers;
+
+            internal IntPtr[] Array
+            {
+                get
+                {
+                    return _buffers;
+                }
+            }
+
+            public InfoBufferArray(int length)
+            {
+                _buffers = new IntPtr[length];
+                for (int i = 0; i < length; i++)
+                    _buffers[i] = new InfoBuffer(size).Address;
+            }
+
+            public T this[int index]
+            {
+                get
+                {
+                    return new InfoBuffer
+                    {
+                        Address = _buffers[index]
+                    }.CastTo<T>();
+                }
+            }
+
+            public int Length
+            {
+                get
+                {
+                    return _buffers.Length;
+                }
+            }
+
+            public IntPtr Size
+            {
+                get
+                {
+                    return (IntPtr)(_buffers.Length * IntPtr.Size);
+                }
+            }
+
+            public void Dispose()
+            {
+                for (int i = 0; i < _buffers.Length; i++)
+                    new InfoBuffer
+                    {
+                        Address = _buffers[i]
+                    }.Dispose();
+            }
         }
 
         // TODO: Figure out how to use segments of large arrays well ...
