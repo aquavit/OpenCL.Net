@@ -17,6 +17,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 namespace OpenCL.Net
 {
@@ -439,6 +440,32 @@ namespace OpenCL.Net
             }
 
             #endregion
+        }
+
+        [Serializable]
+        public class Exception : System.Exception
+        {
+            public Exception(ErrorCode error)
+                : base(error.ToString())
+            {
+            }
+
+            public Exception(ErrorCode error, string message)
+                : base(string.Format("{0}: {1}", error, message))
+            {
+            }
+
+            public Exception(ErrorCode error, string message, Exception inner)
+                : base(string.Format("{0}: {1}", error, message), inner)
+            {
+            }
+
+            protected Exception(
+                SerializationInfo info,
+                StreamingContext context)
+                : base(info, context)
+            {
+            }
         }
     }
 }
