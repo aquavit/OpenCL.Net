@@ -169,6 +169,26 @@ namespace OpenCL.Net
             return GetInfo(GetKernelWorkGroupInfo, kernel, device, paramName, out error);
         }
 
+        public static ErrorCode SetKernelArg(Kernel kernel, uint argIndex, Mem value)
+        {
+            return SetKernelArg(kernel, argIndex, (IntPtr)IntPtr.Size, value);
+        }
+
+        public static ErrorCode SetKernelArg(Kernel kernel, uint argIndex, float value)
+        {
+            return SetKernelArg(kernel, argIndex, (IntPtr)sizeof(float), value);
+        }
+
+        public static ErrorCode SetKernelArg(Kernel kernel, uint argIndex, int value)
+        {
+            return SetKernelArg(kernel, argIndex, (IntPtr)sizeof(int), value);
+        }
+
+        public static ErrorCode SetKernelArg(Kernel kernel, uint argIndex, bool value)
+        {
+            return SetKernelArg(kernel, argIndex, (IntPtr)sizeof(bool), value);
+        }
+
         #endregion
 
         #region Event object API
