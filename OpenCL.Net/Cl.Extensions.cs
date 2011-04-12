@@ -59,6 +59,9 @@ namespace OpenCL.Net
         [StructLayout(LayoutKind.Sequential)]
         public struct InfoBuffer : IDisposable
         {
+            [DllImport("msvcrt.dll", EntryPoint = "memcpy")]
+            private static extern void CopyMemory(IntPtr pDest, IntPtr pSrc, int length);
+
             private static readonly InfoBuffer _empty = new InfoBuffer
             {
                 _buffer = IntPtr.Zero
@@ -69,6 +72,14 @@ namespace OpenCL.Net
             public InfoBuffer(IntPtr size)
             {
                 _buffer = Marshal.AllocHGlobal(size);
+            }
+
+            public InfoBuffer(byte[] array)
+            {
+                int length = array.Length;
+                _buffer = Marshal.AllocHGlobal(length);
+                using (var source = array.Pin())
+                    CopyMemory(_buffer, source, length);
             }
 
             internal IntPtr Address
@@ -148,7 +159,7 @@ namespace OpenCL.Net
                 }
             }
 
-            public InfoBufferArray(InfoBuffer[] buffers)
+            public InfoBufferArray(params InfoBuffer[] buffers)
             {
                 _buffers = new IntPtr[buffers.Length];
                 for (int i = 0; i < buffers.Length; i++)
