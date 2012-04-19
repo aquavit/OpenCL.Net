@@ -336,6 +336,11 @@ namespace OpenCL.Net
                 _handle = GCHandle.Alloc(obj, GCHandleType.Pinned);
             }
 
+            public void Unpin()
+            {
+                Dispose();
+            }
+
             #region IDisposable Members
 
             public void Dispose()
