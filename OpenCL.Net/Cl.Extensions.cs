@@ -29,8 +29,8 @@ namespace OpenCL.Net
         {
             IntPtr paramSize;
             error = method(handle, name, IntPtr.Zero, InfoBuffer.Empty, out paramSize);
-            if (error != ErrorCode.Success)
-                return InfoBuffer.Empty;
+            // no error checking here because some implementations return InvalidValue even
+            // though the paramSize is correctly returned
 
             var buffer = new InfoBuffer(paramSize);
             error = method(handle, name, paramSize, buffer, out paramSize);
@@ -45,8 +45,8 @@ namespace OpenCL.Net
         {
             IntPtr paramSize;
             error = method(handle1, handle2, name, IntPtr.Zero, InfoBuffer.Empty, out paramSize);
-            if (error != ErrorCode.Success)
-                return InfoBuffer.Empty;
+            // no error checking here because some implementations return InvalidValue even
+            // though the paramSize is correctly returned
 
             var buffer = new InfoBuffer(paramSize);
             error = method(handle1, handle2, name, paramSize, buffer, out paramSize);
