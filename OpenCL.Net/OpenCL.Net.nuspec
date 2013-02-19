@@ -28,8 +28,8 @@ Please send comments and/or suggestions to ananth&lt;at&gt;ananthonline&lt;dot&g
     <iconUrl>http://download.codeplex.com/Download?ProjectName=openclnet&amp;DownloadId=221265&amp;Build=18301</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>1.0 - Initial release</releaseNotes>
+    <releaseNotes></releaseNotes>
     <copyright>Copyright 2010</copyright>
-    <tags>OpenCL C# .NET GPGPU Dataparallel Compute</tags>
+    <tags>OpenCL C# .NET GPGPU Dataparallel Compute multicore multi-core parallel HPC</tags>
   </metadata>
 </package>
