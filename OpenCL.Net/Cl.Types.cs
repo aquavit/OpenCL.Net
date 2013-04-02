@@ -18,12 +18,18 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace OpenCL.Net
 {
     public static partial class Cl
     {
-        internal interface IHandle
+        public interface IHandle
+        {
+        }
+
+        internal interface IHandleData
         {
             IntPtr Handle
             {
@@ -31,13 +37,45 @@ namespace OpenCL.Net
             }
         }
 
-        internal interface IRefCountedHandle : IHandle, IDisposable
+        internal interface IRefCountedHandle : IHandle, IHandleData, IDisposable
         {
             void Retain();
         }
 
+        public static readonly InvalidHandle Invalid = new InvalidHandle();
+
         [StructLayout(LayoutKind.Sequential)]
-        public struct Platform : IHandle
+        public struct InvalidHandle
+        { 
+            public static bool operator ==(IHandle handle, InvalidHandle invalidHandle)
+            {
+                return ((IHandleData)handle).Handle == IntPtr.Zero;
+            }
+
+            public static bool operator !=(IHandle handle, InvalidHandle invalidHandle)
+            {
+                return ((IHandleData)handle).Handle != IntPtr.Zero;
+            }
+
+            public static bool operator ==(InvalidHandle invalidHandle, IHandle handle)
+            {
+                return ((IHandleData)handle).Handle == IntPtr.Zero;
+            }
+            public static bool operator !=(InvalidHandle invalidHandle, IHandle handle)
+            {
+                return ((IHandleData)handle).Handle != IntPtr.Zero;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is IHandle ? 
+                    ((IHandleData)obj).Handle == IntPtr.Zero :
+                    false;
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Platform : IHandle, IHandleData
         {
             private readonly IntPtr _handle;
 
@@ -46,9 +84,9 @@ namespace OpenCL.Net
                 _handle = handle;
             }
 
-            #region IHandle Members
+            #region IHandleData Members
 
-            IntPtr IHandle.Handle
+            IntPtr IHandleData.Handle
             {
                 get
                 {
@@ -65,7 +103,7 @@ namespace OpenCL.Net
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct Device : IHandle
+        public struct Device : IHandle, IHandleData
         {
             private readonly IntPtr _handle;
 
@@ -74,9 +112,9 @@ namespace OpenCL.Net
                 _handle = handle;
             }
 
-            #region IHandle Members
+            #region IHandleData Members
 
-            IntPtr IHandle.Handle
+            IntPtr IHandleData.Handle
             {
                 get
                 {
@@ -165,9 +203,9 @@ namespace OpenCL.Net
                 _handle = handle;
             }
 
-            #region IHandle Members
+            #region IHandleData Members
 
-            IntPtr IHandle.Handle
+            IntPtr IHandleData.Handle
             {
                 get
                 {
@@ -194,10 +232,12 @@ namespace OpenCL.Net
             }
 
             #endregion
+
+            public static readonly Context Zero = new Context(IntPtr.Zero);
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct Mem : IRefCountedHandle
+        public struct Mem : IRefCountedHandle, IEquatable<Cl.Mem>
         {
             private readonly IntPtr _handle;
 
@@ -215,9 +255,9 @@ namespace OpenCL.Net
 
             #endregion
 
-            #region IHandle Members
+            #region IHandleData Members
 
-            IntPtr IHandle.Handle
+            IntPtr IHandleData.Handle
             {
                 get
                 {
@@ -235,6 +275,11 @@ namespace OpenCL.Net
             }
 
             #endregion
+
+            public bool Equals(Mem other)
+            {
+                return _handle.ToInt64() == other._handle.ToInt64();
+            }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -256,9 +301,9 @@ namespace OpenCL.Net
 
             #endregion
 
-            #region IHandle Members
+            #region IHandleData Members
 
-            IntPtr IHandle.Handle
+            IntPtr IHandleData.Handle
             {
                 get
                 {
@@ -297,9 +342,9 @@ namespace OpenCL.Net
 
             #endregion
 
-            #region IHandle Members
+            #region IHandleData Members
 
-            IntPtr IHandle.Handle
+            IntPtr IHandleData.Handle
             {
                 get
                 {
@@ -338,9 +383,9 @@ namespace OpenCL.Net
 
             #endregion
 
-            #region IHandle Members
+            #region IHandleData Members
 
-            IntPtr IHandle.Handle
+            IntPtr IHandleData.Handle
             {
                 get
                 {
@@ -358,6 +403,18 @@ namespace OpenCL.Net
             }
 
             #endregion
+
+            public static readonly Cl.Kernel Zero = new Cl.Kernel();
+
+            public static bool operator ==(Cl.Kernel a, Cl.Kernel b)
+            {
+                return a._handle == b._handle;
+            }
+
+            public static bool operator !=(Cl.Kernel a, Cl.Kernel b)
+            {
+                return a._handle != b._handle;
+            }
         }
         
         [StructLayout(LayoutKind.Sequential)]
@@ -379,9 +436,9 @@ namespace OpenCL.Net
 
             #endregion
 
-            #region IHandle Members
+            #region IHandleData Members
 
-            IntPtr IHandle.Handle
+            IntPtr IHandleData.Handle
             {
                 get
                 {
@@ -420,9 +477,9 @@ namespace OpenCL.Net
 
             #endregion
 
-            #region IHandle Members
+            #region IHandleData Members
 
-            IntPtr IHandle.Handle
+            IntPtr IHandleData.Handle
             {
                 get
                 {
@@ -466,6 +523,11 @@ namespace OpenCL.Net
                 : base(info, context)
             {
             }
+        }
+
+        internal sealed class TypeSize<T>
+        {
+            public static readonly IntPtr Size = (IntPtr)Marshal.SizeOf(typeof(T));
         }
     }
 }

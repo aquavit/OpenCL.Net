@@ -55,7 +55,7 @@ namespace OpenCL.Net
                                                 InfoBuffer paramValue,
                                                 out IntPtr paramValueSize)
         {
-            return clGetPlatformInfo((platformId as IHandle).Handle, paramName, paramValueBufferSize, paramValue.Address, out paramValueSize);
+            return clGetPlatformInfo((platformId as IHandleData).Handle, paramName, paramValueBufferSize, paramValue.Address, out paramValueSize);
         }
 
         #endregion
@@ -74,7 +74,7 @@ namespace OpenCL.Net
                                              Device[] devices,
                                              out cl_uint numDevices)
         {
-            return clGetDeviceIDs((platform as IHandle).Handle, deviceType, numEntries, devices, out numDevices);
+            return clGetDeviceIDs((platform as IHandleData).Handle, deviceType, numEntries, devices, out numDevices);
         }
 
         [DllImport(Library)]
@@ -89,7 +89,7 @@ namespace OpenCL.Net
                                               InfoBuffer paramValue,
                                               out IntPtr paramValueSizeRet)
         {
-            return clGetDeviceInfo((device as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+            return clGetDeviceInfo((device as IHandleData).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
 
         #endregion
@@ -104,11 +104,11 @@ namespace OpenCL.Net
                                                      IntPtr userData,
                                                      out ErrorCode errcodeRet);
         public static Context CreateContext(ContextProperty[] properties,
-                                               cl_uint numDevices,
-                                               Device[] devices,
-                                               ContextNotify pfnNotify,
-                                               IntPtr userData,
-                                               out ErrorCode errcodeRet)
+                                            cl_uint numDevices,
+                                            Device[] devices,
+                                            ContextNotify pfnNotify,
+                                            IntPtr userData,
+                                            out ErrorCode errcodeRet)
         {
             return new Context(clCreateContext(properties, numDevices, devices, pfnNotify, userData, out errcodeRet));
         }
@@ -120,10 +120,10 @@ namespace OpenCL.Net
                                                              IntPtr userData,
                                                              [Out] [MarshalAs(UnmanagedType.I4)] out ErrorCode errcodeRet);
         public static Context CreateContextFromType(ContextProperty[] properties,
-                                                       DeviceType deviceType,
-                                                       ContextNotify pfnNotify,
-                                                       IntPtr userData,
-                                                       out ErrorCode errcodeRet)
+                                                    DeviceType deviceType,
+                                                    ContextNotify pfnNotify,
+                                                    IntPtr userData,
+                                                    out ErrorCode errcodeRet)
         {
             return new Context(clCreateContextFromType(properties, deviceType, pfnNotify, userData, out errcodeRet));
         }
@@ -154,7 +154,7 @@ namespace OpenCL.Net
                                                InfoBuffer paramValue,
                                                out IntPtr paramValueSizeRet)
         {
-            return clGetContextInfo((context as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+            return clGetContextInfo((context as IHandleData).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
 
         #endregion
@@ -169,12 +169,12 @@ namespace OpenCL.Net
         public static Mem CreateBuffer(Context context, MemFlags flags, IntPtr size, object hostData, out ErrorCode errcodeRet)
         {
             using (var hostPtr = hostData.Pin())
-                return new Mem(clCreateBuffer((context as IHandle).Handle, flags, size, hostPtr, out errcodeRet));
+                return new Mem(clCreateBuffer((context as IHandleData).Handle, flags, size, hostPtr, out errcodeRet));
         }
 
         public static Mem CreateBuffer(Context context, MemFlags flags, IntPtr size, IntPtr hostPtr, out ErrorCode errcodeRet)
         {
-            return new Mem(clCreateBuffer((context as IHandle).Handle, flags, size, hostPtr, out errcodeRet));
+            return new Mem(clCreateBuffer((context as IHandleData).Handle, flags, size, hostPtr, out errcodeRet));
         }
 
         [DllImport(Library)]
@@ -205,7 +205,7 @@ namespace OpenCL.Net
                                                          ImageFormat[] imageFormats,
                                                          out cl_uint numImageFormats)
         {
-            return clGetSupportedImageFormats((context as IHandle).Handle, flags, imageType, numEntries, imageFormats, out numImageFormats);
+            return clGetSupportedImageFormats((context as IHandleData).Handle, flags, imageType, numEntries, imageFormats, out numImageFormats);
         }
 
         [DllImport(Library)]
@@ -228,7 +228,7 @@ namespace OpenCL.Net
         {
             using (var hostPtr = hostData.Pin())
             using (var imageFormatPtr = imageFormat.Pin())
-                return new Mem(clCreateImage2D((context as IHandle).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageRowPitch, hostPtr, out errorcodeRet));
+                return new Mem(clCreateImage2D((context as IHandleData).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageRowPitch, hostPtr, out errorcodeRet));
         }
         public static Mem CreateImage2D(Context context,
                                         MemFlags flags,
@@ -240,7 +240,7 @@ namespace OpenCL.Net
                                         out ErrorCode errorcodeRet)
         {
             using (var imageFormatPtr = imageFormat.Pin())
-                return new Mem(clCreateImage2D((context as IHandle).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageRowPitch, hostPtr, out errorcodeRet));
+                return new Mem(clCreateImage2D((context as IHandleData).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageRowPitch, hostPtr, out errorcodeRet));
         }
 
         [DllImport(Library)]
@@ -267,7 +267,7 @@ namespace OpenCL.Net
         {
             using (var hostPtr = hostData.Pin())
             using (var imageFormatPtr = imageFormat.Pin())
-                return new Mem(clCreateImage3D((context as IHandle).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageDepth, imageRowPitch, imageSlicePitch, hostPtr, out errcodeRet));
+                return new Mem(clCreateImage3D((context as IHandleData).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageDepth, imageRowPitch, imageSlicePitch, hostPtr, out errcodeRet));
         }
         public static Mem CreateImage3D(Context context,
                                         MemFlags flags,
@@ -281,7 +281,7 @@ namespace OpenCL.Net
                                         out ErrorCode errcodeRet)
         {
             using (var imageFormatPtr = imageFormat.Pin())
-                return new Mem(clCreateImage3D((context as IHandle).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageDepth, imageRowPitch, imageSlicePitch, hostPtr, out errcodeRet));
+                return new Mem(clCreateImage3D((context as IHandleData).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageDepth, imageRowPitch, imageSlicePitch, hostPtr, out errcodeRet));
         }
 
 
@@ -297,7 +297,7 @@ namespace OpenCL.Net
                                                  InfoBuffer paramValue,
                                                  out IntPtr paramValueSizeRet)
         {
-            return clGetMemObjectInfo((memObj as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+            return clGetMemObjectInfo((memObj as IHandleData).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
 
         [DllImport(Library)]
@@ -312,7 +312,7 @@ namespace OpenCL.Net
                                              InfoBuffer paramValue,
                                              out IntPtr paramValueSizeRet)
         {
-            return clGetImageInfo((image as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+            return clGetImageInfo((image as IHandleData).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
 
         #endregion
@@ -359,7 +359,7 @@ namespace OpenCL.Net
         {
             using (var binariesPtr = binaries.Array.Pin())
             using (var binariesStatusPtr = binariesStatus.Array.Pin())
-                return new Program(clCreateProgramWithBinary((context as IHandle).Handle, numDevices, deviceList, lengths, binariesPtr, binariesStatusPtr, out errcodeRet));
+                return new Program(clCreateProgramWithBinary((context as IHandleData).Handle, numDevices, deviceList, lengths, binariesPtr, binariesStatusPtr, out errcodeRet));
         }
 
         [DllImport(Library)]
@@ -391,7 +391,7 @@ namespace OpenCL.Net
                                              ProgramNotify pfnNotify,
                                              IntPtr userData)
         {
-            return clBuildProgram((program as IHandle).Handle, numDevices, deviceList, options, pfnNotify, userData);
+            return clBuildProgram((program as IHandleData).Handle, numDevices, deviceList, options, pfnNotify, userData);
         }
 
         [DllImport(Library)]
@@ -406,7 +406,7 @@ namespace OpenCL.Net
                                                InfoBuffer paramValue,
                                                out IntPtr paramValueSizeRet)
         {
-             return clGetProgramInfo((program as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+             return clGetProgramInfo((program as IHandleData).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
 
         public static ErrorCode GetProgramInfo(Program program,
@@ -416,7 +416,7 @@ namespace OpenCL.Net
                                                out IntPtr paramValueSizeRet)
         {
             using (var paramValuesPtr = paramValues.Array.Pin())
-                return clGetProgramInfo((program as IHandle).Handle, paramName, paramValueSize, paramValuesPtr,
+                return clGetProgramInfo((program as IHandleData).Handle, paramName, paramValueSize, paramValuesPtr,
                                         out paramValueSizeRet);
         }
 
@@ -434,7 +434,7 @@ namespace OpenCL.Net
                                                     InfoBuffer paramValue,
                                                     out IntPtr paramValueSizeRet)
         {
-            return clGetProgramBuildInfo((program as IHandle).Handle, (device as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+            return clGetProgramBuildInfo((program as IHandleData).Handle, (device as IHandleData).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
 
         #endregion
@@ -447,7 +447,7 @@ namespace OpenCL.Net
                                                     out ErrorCode errcodeRet);
         public static Kernel CreateKernel(Program program, string kernelName, out ErrorCode errcodeRet)
         {
-            return new Kernel(clCreateKernel((program as IHandle).Handle, kernelName, out errcodeRet));
+            return new Kernel(clCreateKernel((program as IHandleData).Handle, kernelName, out errcodeRet));
         }
 
         [DllImport(Library)]
@@ -460,7 +460,7 @@ namespace OpenCL.Net
                                                        Kernel[] kernels,
                                                        out uint numKernelsRet)
         {
-            return clCreateKernelsInProgram((program as IHandle).Handle, numKernels, kernels, out numKernelsRet);
+            return clCreateKernelsInProgram((program as IHandleData).Handle, numKernels, kernels, out numKernelsRet);
         }
 
         [DllImport(Library)]
@@ -482,7 +482,7 @@ namespace OpenCL.Net
         public static ErrorCode SetKernelArg(Kernel kernel, uint argIndex, IntPtr argSize, object argValue)
         {
             using (var argPtr = argValue.Pin())
-                return clSetKernelArg((kernel as IHandle).Handle, argIndex, argSize, argPtr);
+                return clSetKernelArg((kernel as IHandleData).Handle, argIndex, argSize, argPtr);
         }
 
         [DllImport(Library)]
@@ -497,7 +497,7 @@ namespace OpenCL.Net
                                               InfoBuffer paramValue,
                                               out IntPtr paramValueSizeRet)
         {
-            return clGetKernelInfo((kernel as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+            return clGetKernelInfo((kernel as IHandleData).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
 
         [DllImport(Library)]
@@ -506,7 +506,7 @@ namespace OpenCL.Net
         public static ErrorCode GetKernelWorkGroupInfo(Kernel kernel, Device device, KernelWorkGroupInfo paramName,
                                                        IntPtr paramValueSize, InfoBuffer paramValue, out IntPtr paramValueSizeRet)
         {
-            return clGetKernelWorkGroupInfo((kernel as IHandle).Handle, (device as IHandle).Handle,
+            return clGetKernelWorkGroupInfo((kernel as IHandleData).Handle, (device as IHandleData).Handle,
                                             paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
 
@@ -520,7 +520,7 @@ namespace OpenCL.Net
                                                           out ErrorCode error);
         public static CommandQueue CreateCommandQueue(Context context, Device device, CommandQueueProperties properties, out ErrorCode error)
         {
-            return new CommandQueue(clCreateCommandQueue((context as IHandle).Handle, (device as IHandle).Handle, properties, out error));
+            return new CommandQueue(clCreateCommandQueue((context as IHandleData).Handle, (device as IHandleData).Handle, properties, out error));
         }
 
         [DllImport(Library)]
@@ -549,7 +549,7 @@ namespace OpenCL.Net
                                                     InfoBuffer paramValue,
                                                     out IntPtr paramValueSizeRet)
         {
-            return clGetCommandQueueInfo((commandQueue as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+            return clGetCommandQueueInfo((commandQueue as IHandleData).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
 
         [DllImport(Library)]
@@ -561,7 +561,7 @@ namespace OpenCL.Net
                                                         CommandQueueProperties properties,
                                                         bool enable, out CommandQueueProperties oldProperties)
         {
-            return clSetCommandQueueProperty((commandQueue as IHandle).Handle, properties, enable, out oldProperties);
+            return clSetCommandQueueProperty((commandQueue as IHandleData).Handle, properties, enable, out oldProperties);
         }
 
         #endregion
@@ -572,8 +572,8 @@ namespace OpenCL.Net
         private static extern ErrorCode clEnqueueReadBuffer(IntPtr commandQueue, 
                                                             IntPtr buffer,
                                                             Bool blockingRead,
-                                                            IntPtr offset,
-                                                            IntPtr cb,
+                                                            IntPtr offsetInBytes,
+                                                            IntPtr lengthInBytes,
                                                             IntPtr ptr,
                                                             uint numEventsInWaitList,
                                                             [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 6)] Event[] eventWaitList,
@@ -581,37 +581,37 @@ namespace OpenCL.Net
         public static ErrorCode EnqueueReadBuffer(CommandQueue commandQueue,
                                                   Mem buffer,
                                                   Bool blockingRead,
-                                                  IntPtr offset,
-                                                  IntPtr cb,
+                                                  IntPtr offsetInBytes,
+                                                  IntPtr lengthInBytes,
                                                   object data,
                                                   uint numEventsInWaitList,
                                                   Event[] eventWaitList,
                                                   out Event e)
         {
             using (var dataPtr = data.Pin())
-                return clEnqueueReadBuffer((commandQueue as IHandle).Handle, (buffer as IHandle).Handle, 
-                                           blockingRead, offset, cb, dataPtr, numEventsInWaitList, eventWaitList, out e);
+                return clEnqueueReadBuffer((commandQueue as IHandleData).Handle, (buffer as IHandleData).Handle, 
+                                           blockingRead, offsetInBytes, lengthInBytes, dataPtr, numEventsInWaitList, eventWaitList, out e);
         }
         public static ErrorCode EnqueueReadBuffer(CommandQueue commandQueue,
                                                   Mem buffer,
                                                   Bool blockingRead,
-                                                  IntPtr offset,
-                                                  IntPtr cb,
+                                                  IntPtr offsetInBytes,
+                                                  IntPtr lengthInBytes,
                                                   IntPtr data,
                                                   uint numEventsInWaitList,
                                                   Event[] eventWaitList,
                                                   out Event e)
         {
-                return clEnqueueReadBuffer((commandQueue as IHandle).Handle, (buffer as IHandle).Handle,
-                                           blockingRead, offset, cb, data, numEventsInWaitList, eventWaitList, out e);
+                return clEnqueueReadBuffer((commandQueue as IHandleData).Handle, (buffer as IHandleData).Handle,
+                                           blockingRead, offsetInBytes, lengthInBytes, data, numEventsInWaitList, eventWaitList, out e);
         }
 
         [DllImport(Library)]
         private static extern ErrorCode clEnqueueWriteBuffer(IntPtr commandQueue,
                                                              IntPtr buffer,
                                                              Bool blockingWrite,
-                                                             IntPtr offset,
-                                                             IntPtr cb,
+                                                             IntPtr offsetInBytes,
+                                                             IntPtr lengthInBytes,
                                                              IntPtr ptr,
                                                              uint numEventsInWaitList,
                                                              [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 6)] Event[] eventWaitList,
@@ -619,27 +619,27 @@ namespace OpenCL.Net
         public static ErrorCode EnqueueWriteBuffer(CommandQueue commandQueue,
                                                    Mem buffer,
                                                    Bool blockingWrite,
-                                                   IntPtr offset,
-                                                   IntPtr cb,
+                                                   IntPtr offsetInBytes,
+                                                   IntPtr lengthInBytes,
                                                    object data,
                                                    uint numEventsInWaitList,
                                                    Event[] eventWaitList,
                                                    out Event e)
         {
             using (var dataPtr = data.Pin())
-                return clEnqueueWriteBuffer((commandQueue as IHandle).Handle, (buffer as IHandle).Handle, blockingWrite, offset, cb, dataPtr, numEventsInWaitList, eventWaitList, out e);
+                return clEnqueueWriteBuffer((commandQueue as IHandleData).Handle, (buffer as IHandleData).Handle, blockingWrite, offsetInBytes, lengthInBytes, dataPtr, numEventsInWaitList, eventWaitList, out e);
         }
         public static ErrorCode EnqueueWriteBuffer(CommandQueue commandQueue,
                                                    Mem buffer,
                                                    Bool blockingWrite,
-                                                   IntPtr offset,
-                                                   IntPtr cb,
+                                                   IntPtr offsetInBytes,
+                                                   IntPtr lengthInBytes,
                                                    IntPtr data,
                                                    uint numEventsInWaitList,
                                                    Event[] eventWaitList,
                                                    out Event e)
         {
-            return clEnqueueWriteBuffer((commandQueue as IHandle).Handle, (buffer as IHandle).Handle, blockingWrite, offset, cb, data, numEventsInWaitList, eventWaitList, out e);
+            return clEnqueueWriteBuffer((commandQueue as IHandleData).Handle, (buffer as IHandleData).Handle, blockingWrite, offsetInBytes, lengthInBytes, data, numEventsInWaitList, eventWaitList, out e);
         }
 
 
@@ -663,7 +663,7 @@ namespace OpenCL.Net
                                                   Event[] eventWaitList,
                                                   out Event e)
         {
-            return clEnqueueCopyBuffer((commandQueue as IHandle).Handle, (srcBuffer as IHandle).Handle, (dstBuffer as IHandle).Handle,
+            return clEnqueueCopyBuffer((commandQueue as IHandleData).Handle, (srcBuffer as IHandleData).Handle, (dstBuffer as IHandleData).Handle,
                                        srcOffset, dstOffset, cb, numEventsInWaitList, eventWaitList, out e);
         }
 
@@ -692,7 +692,7 @@ namespace OpenCL.Net
                                                  out Event e)
         {
             using (var dataPtr = data.Pin())
-                return clEnqueueReadImage((commandQueue as IHandle).Handle, (image as IHandle).Handle, 
+                return clEnqueueReadImage((commandQueue as IHandleData).Handle, (image as IHandleData).Handle, 
                                           blockingRead, origin, region, rowPitch, slicePitch, dataPtr, numEventsInWaitList, eventWaitList, out e);
         }
 
@@ -721,7 +721,7 @@ namespace OpenCL.Net
                                                   out Event e)
         {
             using (var dataPtr = data.Pin())
-                return clEnqueueWriteImage((commandQueue as IHandle).Handle, (image as IHandle).Handle,
+                return clEnqueueWriteImage((commandQueue as IHandleData).Handle, (image as IHandleData).Handle,
                                           blockingWrite, origin, region, rowPitch, slicePitch, dataPtr, numEventsInWaitList, eventWaitList, out e);
         }
 
@@ -745,7 +745,7 @@ namespace OpenCL.Net
                                                  Event[] eventWaitList,
                                                  out Event e)
         {
-            return clEnqueueCopyImage((commandQueue as IHandle).Handle, (srcImage as IHandle).Handle, (dstImage as IHandle).Handle,
+            return clEnqueueCopyImage((commandQueue as IHandleData).Handle, (srcImage as IHandleData).Handle, (dstImage as IHandleData).Handle,
                                       srcOrigin, dstOrigin, region, numEventsInWaitList, eventWaitList, out e);
         }
 
@@ -769,7 +769,7 @@ namespace OpenCL.Net
                                                          Event[] eventWaitList,
                                                          out Event e)
         {
-            return clEnqueueCopyImageToBuffer((commandQueue as IHandle).Handle, (srcImage as IHandle).Handle, (dstBuffer as IHandle).Handle,
+            return clEnqueueCopyImageToBuffer((commandQueue as IHandleData).Handle, (srcImage as IHandleData).Handle, (dstBuffer as IHandleData).Handle,
                 srcOrigin, region, dstOffset, numEventsInWaitList, eventWaitList, out e);
         }
 
@@ -793,7 +793,7 @@ namespace OpenCL.Net
                                                          Event[] eventWaitList,
                                                          out Event e)
         {
-            return clEnqueueCopyBufferToImage((commandQueue as IHandle).Handle, (srcBuffer as IHandle).Handle, (dstImage as IHandle).Handle,
+            return clEnqueueCopyBufferToImage((commandQueue as IHandleData).Handle, (srcBuffer as IHandleData).Handle, (dstImage as IHandleData).Handle,
                 srcOffset, dstOrigin, region, numEventsInWaitList, eventWaitList, out e);
         }
 
@@ -819,7 +819,7 @@ namespace OpenCL.Net
                                                   out Event e,
                                                   out ErrorCode errCodeRet)
         {
-            return new InfoBuffer(clEnqueueMapBuffer((commandQueue as IHandle).Handle, (buffer as IHandle).Handle, 
+            return new InfoBuffer(clEnqueueMapBuffer((commandQueue as IHandleData).Handle, (buffer as IHandleData).Handle, 
                                                      blockingMap, mapFlags, offset, cb, numEventsInWaitList, eventWaitList, out e, out errCodeRet));
         }
 
@@ -849,7 +849,7 @@ namespace OpenCL.Net
                                                  out Event e,
                                                  out ErrorCode errCodeRet)
         {
-            return new InfoBuffer(clEnqueueMapImage((commandQueue as IHandle).Handle, (image as IHandle).Handle, 
+            return new InfoBuffer(clEnqueueMapImage((commandQueue as IHandleData).Handle, (image as IHandleData).Handle, 
                                                     blockingMap, mapFlags, origin, region, 
                                                     out imageRowPitch, out imageSlicePitch, numEventsInWaitList, 
                                                     eventWaitList, out e, out errCodeRet));
@@ -869,7 +869,7 @@ namespace OpenCL.Net
                                                    Event[] eventWaitList,
                                                    out Event e)
         {
-            return clEnqueueUnmapMemObject((commandQueue as IHandle).Handle, (memObj as IHandle).Handle,
+            return clEnqueueUnmapMemObject((commandQueue as IHandleData).Handle, (memObj as IHandleData).Handle,
                 mappedObject.Address, numEventsInWaitList, eventWaitList, out e);
         }
 
@@ -893,7 +893,7 @@ namespace OpenCL.Net
                                                      Event[] eventWaitList,
                                                      out Event e)
         {
-            return clEnqueueNDRangeKernel((commandQueue as IHandle).Handle, (kernel as IHandle).Handle, 
+            return clEnqueueNDRangeKernel((commandQueue as IHandleData).Handle, (kernel as IHandleData).Handle, 
                 workDim, globalWorkOffset, globalWorkSize, localWorkSize, numEventsInWaitList, eventWaitList, out e);
         }
 
@@ -909,7 +909,7 @@ namespace OpenCL.Net
                                             Event[] eventWaitList,
                                             out Event e)
         {
-            return clEnqueueTask((commandQueue as IHandle).Handle, (kernel as IHandle).Handle, numEventsInWaitList, eventWaitList, out e);
+            return clEnqueueTask((commandQueue as IHandleData).Handle, (kernel as IHandleData).Handle, numEventsInWaitList, eventWaitList, out e);
         }
 
         // TODO: Implement and test "clEnqueueNativeKernel" separately
@@ -920,7 +920,7 @@ namespace OpenCL.Net
         public static ErrorCode EnqueueMarker(CommandQueue commandQueue,
                                               out Event e)
         {
-            return clEnqueueMarker((commandQueue as IHandle).Handle, out e);
+            return clEnqueueMarker((commandQueue as IHandleData).Handle, out e);
         }
 
         [DllImport(Library)]
@@ -931,14 +931,14 @@ namespace OpenCL.Net
             uint numEventsInWaitList,
             Event[] eventWaitList)
         {
-            return clEnqueueWaitForEvents((commandQueue as IHandle).Handle, numEventsInWaitList, eventWaitList);
+            return clEnqueueWaitForEvents((commandQueue as IHandleData).Handle, numEventsInWaitList, eventWaitList);
         }
 
         [DllImport(Library)]
         private static extern ErrorCode clEnqueueBarrier(IntPtr commandQueue);
         public static ErrorCode EnqueueBarrier(CommandQueue commandQueue)
         {
-            return clEnqueueBarrier((commandQueue as IHandle).Handle);
+            return clEnqueueBarrier((commandQueue as IHandleData).Handle);
         }
 
         #endregion
@@ -949,14 +949,14 @@ namespace OpenCL.Net
         private static extern ErrorCode clFlush(IntPtr commandQueue);
         public static ErrorCode Flush(CommandQueue commandQueue)
         {
-            return clFlush((commandQueue as IHandle).Handle);
+            return clFlush((commandQueue as IHandleData).Handle);
         }
 
         [DllImport(Library)]
         private static extern ErrorCode clFinish(IntPtr commandQueue);
         public static ErrorCode Finish(CommandQueue commandQueue)
         {
-            return clFinish((commandQueue as IHandle).Handle);
+            return clFinish((commandQueue as IHandleData).Handle);
         }
 
         #endregion
@@ -984,7 +984,7 @@ namespace OpenCL.Net
                                              InfoBuffer paramValue,
                                              out IntPtr paramValueSizeRet)
         {
-            return clGetEventInfo((e as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+            return clGetEventInfo((e as IHandleData).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
 
         [DllImport(Library)]
@@ -1017,21 +1017,21 @@ namespace OpenCL.Net
                                             FilterMode filterMode,
                                             out ErrorCode errCodeRet)
         {
-            return new Sampler(clCreateSampler((context as IHandle).Handle, normalizedCoords, addressingMode, filterMode, out errCodeRet));
+            return new Sampler(clCreateSampler((context as IHandleData).Handle, normalizedCoords, addressingMode, filterMode, out errCodeRet));
         }
 
         [DllImport(Library)]
         private static extern ErrorCode clRetainSampler(IntPtr sampler);
         public static ErrorCode RetainSampler(Sampler sampler)
         {
-            return clRetainSampler((sampler as IHandle).Handle);
+            return clRetainSampler((sampler as IHandleData).Handle);
         }
 
         [DllImport(Library)]
         private static extern ErrorCode clReleaseSampler(IntPtr sampler);
         public static ErrorCode ReleaseSampler(Sampler sampler)
         {
-            return clReleaseSampler((sampler as IHandle).Handle);
+            return clReleaseSampler((sampler as IHandleData).Handle);
         }
 
         [DllImport(Library)]
@@ -1046,7 +1046,7 @@ namespace OpenCL.Net
                                                InfoBuffer paramValue,
                                                out IntPtr paramValueSizeRet)
         {
-            return clGetSamplerInfo((sampler as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+            return clGetSamplerInfo((sampler as IHandleData).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
 
         #endregion
@@ -1071,7 +1071,7 @@ namespace OpenCL.Net
                                                       InfoBuffer paramValue,
                                                       out IntPtr paramValueSizeRet)
         {
-            return clGetEventProfilingInfo((e as IHandle).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
+            return clGetEventProfilingInfo((e as IHandleData).Handle, paramName, paramValueSize, paramValue.Address, out paramValueSizeRet);
         }
         #endregion
     }

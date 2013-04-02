@@ -68,15 +68,18 @@ namespace OpenCL.Net
             };
 
             private IntPtr _buffer;
+            private int _size;
 
             public InfoBuffer(IntPtr size)
             {
+                _size = (int)size;
                 _buffer = Marshal.AllocHGlobal(size);
             }
 
             public InfoBuffer(byte[] array)
             {
                 int length = array.Length;
+                _size = length;
                 _buffer = Marshal.AllocHGlobal(length);
                 using (var source = array.Pin())
                     CopyMemory(_buffer, source, length);
@@ -118,6 +121,8 @@ namespace OpenCL.Net
 
                 return result;
             }
+
+            public int Size { get { return _size; } }
 
             public override string ToString()
             {

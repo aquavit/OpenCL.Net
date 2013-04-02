@@ -63,10 +63,14 @@ namespace OpenCL.Net.Tests
         {
             Cl.ErrorCode error;
             foreach (Cl.Platform platform in Cl.GetPlatformIDs(out error))
+            {
+                if (platform == Cl.Invalid)
+                    Console.WriteLine("Invalid handle");
                 Console.WriteLine("Platform Name: {0}, version {1}\nPlatform Vendor: {2}",
                                   Cl.GetPlatformInfo(platform, Cl.PlatformInfo.Name, out error),
                                   Cl.GetPlatformInfo(platform, Cl.PlatformInfo.Version, out error),
                                   Cl.GetPlatformInfo(platform, Cl.PlatformInfo.Vendor, out error));
+            }
         }
 
         [Test]
@@ -429,10 +433,7 @@ namespace OpenCL.Net.Tests
                 // copy results from device back to host
                 IntPtr event_handle = IntPtr.Zero;
 
-                error = Cl.EnqueueReadBuffer(
-                    cmdQueue, hDeviceMemC, Cl.Bool.True, IntPtr.Zero,
-                    new IntPtr(cnDimension.ToInt32() * sizeof(float)),
-                    C, 0, null, out clevent);
+                error = Cl.EnqueueReadBuffer(cmdQueue, hDeviceMemC, Cl.Bool.True, 0, C.Length, C, 0, null, out clevent);
                 Assert.AreEqual(Cl.ErrorCode.Success, error, error.ToString());
 
                 for (int i = 0; i < A.Length; i++)

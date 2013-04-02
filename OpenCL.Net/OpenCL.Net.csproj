@@ -86,6 +86,7 @@
     </PreBuildEvent>
     <PostBuildEvent>@echo off
 if not $(ConfigurationName)==NugetPublish goto wrongConfiguration
+del /Q *.nupkg
 echo Publishing to Nuget
 $(SolutionDir).nuget\Nuget.exe pack $(ProjectPath) -prop Configuration=$(ConfigurationName)
 $(SolutionDir).nuget\Nuget push $(ProjectName)*.nupkg

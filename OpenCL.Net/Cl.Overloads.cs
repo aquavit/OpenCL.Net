@@ -16,6 +16,9 @@
 #endregion
 
 using System;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace OpenCL.Net
 {
@@ -77,9 +80,58 @@ namespace OpenCL.Net
             return GetInfo(GetContextInfo, context, paramName, out error);
         }
 
+        private static Regex WildcardToRegex(this string pattern)
+        {
+            return new Regex("^" + Regex.Escape(pattern).
+            Replace("\\*", ".*").
+            Replace("\\?", ".") + "$", RegexOptions.IgnoreCase);
+        }
+
+        public static Cl.Context CreateContext(string platformWildCard, DeviceType deviceType, out ErrorCode error)
+        {
+            var platformNameRegex = WildcardToRegex(platformWildCard);
+            
+            Cl.Platform? currentPlatform = null;
+            foreach (Platform platform in GetPlatformIDs(out error))
+                if (platformNameRegex.Match(GetPlatformInfo(platform, PlatformInfo.Name, out error).ToString()).Success)
+                {
+                    currentPlatform = platform;
+                    break;
+                }
+
+            if (currentPlatform == null)
+            {
+                error = ErrorCode.InvalidPlatform;
+                return Context.Zero;
+            }
+
+            var compatibleDevices = from device in GetDeviceIDs(currentPlatform.Value, deviceType, out error)
+                                    select device;
+            if (!compatibleDevices.Any())
+            {
+                error = ErrorCode.InvalidDevice;
+                return Context.Zero;
+            }
+            var devices = compatibleDevices.ToArray();
+
+            var context = CreateContext(null, (uint)devices.Length, devices, null, IntPtr.Zero, out error);
+            if (error != ErrorCode.Success)
+            {
+                error = ErrorCode.InvalidContext;
+                return Context.Zero;
+            }
+
+            return context;
+        }
+
         #endregion 
 
         #region Memory Object API
+
+        public static Mem CreateBuffer(Context context, MemFlags flags, int size, object hostData, out ErrorCode errcodeRet)
+        {
+            return CreateBuffer(context, flags, (IntPtr)size, hostData, out errcodeRet);
+        }
 
         public static InfoBuffer GetMemObjectInfo(Mem mem, MemInfo paramName, out ErrorCode error)
         {
@@ -140,6 +192,56 @@ namespace OpenCL.Net
             return GetInfo(GetCommandQueueInfo, commandQueue, paramName, out error);
         }
 
+        public static ErrorCode EnqueueReadBuffer<T>(CommandQueue commandQueue,
+                                                  Mem buffer,
+                                                  Bool blockingRead,
+                                                  int offset,
+                                                  int length,
+                                                  T[] data,
+                                                  int numEventsInWaitList,
+                                                  Event[] eventWaitList,
+                                                  out Event e) where T: struct
+        { 
+            var elementSize = (int)TypeSize<T>.Size;
+            return EnqueueReadBuffer(commandQueue, buffer, blockingRead, (IntPtr)(offset * elementSize), (IntPtr)(length * elementSize), data, (uint)numEventsInWaitList, eventWaitList, out e);
+        }
+
+        public static ErrorCode EnqueueReadBuffer<T>(CommandQueue commandQueue,
+                                                  Mem buffer,
+                                                  Bool blockingRead,
+                                                  T[] data,
+                                                  int numEventsInWaitList,
+                                                  Event[] eventWaitList,
+                                                  out Event e) where T : struct
+        {
+            return EnqueueReadBuffer<T>(commandQueue, buffer, blockingRead, 0, data.Length, data, numEventsInWaitList, eventWaitList, out e);
+        }
+
+        public static ErrorCode EnqueueWriteBuffer<T>(CommandQueue commandQueue,
+                                                   Mem buffer,
+                                                   Bool blockingWrite,
+                                                   int offset,
+                                                   int length,
+                                                   T[] data,
+                                                   int numEventsInWaitList,
+                                                   Event[] eventWaitList,
+                                                   out Event e) where T: struct
+        {
+            var elementSize = (int)TypeSize<T>.Size;
+            return EnqueueWriteBuffer(commandQueue, buffer, blockingWrite, (IntPtr)(offset * elementSize), (IntPtr)(length * elementSize), data, (uint)numEventsInWaitList, eventWaitList, out e);
+        }
+
+        public static ErrorCode EnqueueWriteBuffer<T>(CommandQueue commandQueue,
+                                                   Mem buffer,
+                                                   Bool blockingWrite,
+                                                   T[] data,
+                                                   int numEventsInWaitList,
+                                                   Event[] eventWaitList,
+                                                   out Event e) where T: struct
+        {
+            return EnqueueWriteBuffer(commandQueue, buffer, blockingWrite, 0, data.Length, data, numEventsInWaitList, eventWaitList, out e);
+        }
+
         #endregion
 
         #region Kernel Object API
@@ -169,24 +271,10 @@ namespace OpenCL.Net
             return GetInfo(GetKernelWorkGroupInfo, kernel, device, paramName, out error);
         }
 
-        public static ErrorCode SetKernelArg(Kernel kernel, uint argIndex, Mem value)
-        {
-            return SetKernelArg(kernel, argIndex, (IntPtr)IntPtr.Size, value);
-        }
-
-        public static ErrorCode SetKernelArg(Kernel kernel, uint argIndex, float value)
-        {
-            return SetKernelArg(kernel, argIndex, (IntPtr)sizeof(float), value);
-        }
-
-        public static ErrorCode SetKernelArg(Kernel kernel, uint argIndex, int value)
-        {
-            return SetKernelArg(kernel, argIndex, (IntPtr)sizeof(int), value);
-        }
-
-        public static ErrorCode SetKernelArg(Kernel kernel, uint argIndex, bool value)
-        {
-            return SetKernelArg(kernel, argIndex, (IntPtr)sizeof(bool), value);
+        public static ErrorCode SetKernelArg<T>(Kernel kernel, uint argIndex, T value)
+            where T: struct
+        { 
+            return SetKernelArg(kernel, argIndex, (IntPtr)TypeSize<T>.Size, value);
         }
 
         #endregion
