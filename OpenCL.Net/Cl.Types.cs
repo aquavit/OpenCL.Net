@@ -40,38 +40,7 @@ namespace OpenCL.Net
         internal interface IRefCountedHandle : IHandle, IHandleData, IDisposable
         {
             void Retain();
-        }
-
-        public static readonly InvalidHandle Invalid = new InvalidHandle();
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct InvalidHandle
-        { 
-            public static bool operator ==(IHandle handle, InvalidHandle invalidHandle)
-            {
-                return ((IHandleData)handle).Handle == IntPtr.Zero;
-            }
-
-            public static bool operator !=(IHandle handle, InvalidHandle invalidHandle)
-            {
-                return ((IHandleData)handle).Handle != IntPtr.Zero;
-            }
-
-            public static bool operator ==(InvalidHandle invalidHandle, IHandle handle)
-            {
-                return ((IHandleData)handle).Handle == IntPtr.Zero;
-            }
-            public static bool operator !=(InvalidHandle invalidHandle, IHandle handle)
-            {
-                return ((IHandleData)handle).Handle != IntPtr.Zero;
-            }
-
-            public override bool Equals(object obj)
-            {
-                return obj is IHandle ? 
-                    ((IHandleData)obj).Handle == IntPtr.Zero :
-                    false;
-            }
+            void Release();
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -95,11 +64,6 @@ namespace OpenCL.Net
             }
 
             #endregion
-
-            public static implicit operator IntPtr(Platform platform)
-            {
-                return platform._handle;
-            }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -217,9 +181,14 @@ namespace OpenCL.Net
 
             #region IRefCountedHandle Members
 
-            void IRefCountedHandle.Retain()
+            public void Retain()
             {
                 RetainContext(this);
+            }
+
+            public void Release()
+            {
+                ReleaseContext(this);
             }
 
             #endregion
@@ -228,7 +197,7 @@ namespace OpenCL.Net
 
             public void Dispose()
             {
-                ReleaseContext(this);
+                Release();
             }
 
             #endregion
@@ -248,9 +217,14 @@ namespace OpenCL.Net
 
             #region IRefCountedHandle Members
 
-            void IRefCountedHandle.Retain()
+            public void Retain()
             {
                 RetainMemObject(this);
+            }
+
+            public void Release()
+            {
+                ReleaseMemObject(this);
             }
 
             #endregion
@@ -271,7 +245,7 @@ namespace OpenCL.Net
 
             public void Dispose()
             {
-                ReleaseMemObject(this);
+                Release();
             }
 
             #endregion
@@ -294,9 +268,14 @@ namespace OpenCL.Net
 
             #region IRefCountedHandle Members
 
-            void IRefCountedHandle.Retain()
+            public void Retain()
             {
                 RetainProgram(this);
+            }
+
+            public void Release()
+            {
+                ReleaseProgram(this);
             }
 
             #endregion
@@ -317,7 +296,7 @@ namespace OpenCL.Net
 
             public void Dispose()
             {
-                ReleaseProgram(this);
+                Release();
             }
 
             #endregion
@@ -335,9 +314,14 @@ namespace OpenCL.Net
             
             #region IRefCountedHandle Members
 
-            void IRefCountedHandle.Retain()
+            public void Retain()
             {
                 RetainCommandQueue(this);
+            }
+
+            public void Release()
+            {
+                ReleaseCommandQueue(this);
             }
 
             #endregion
@@ -358,7 +342,7 @@ namespace OpenCL.Net
 
             public void Dispose()
             {
-                ReleaseCommandQueue(this);
+                Release();
             }
 
             #endregion
@@ -376,9 +360,14 @@ namespace OpenCL.Net
 
             #region IRefCountedHandle Members
 
-            void IRefCountedHandle.Retain()
+            public void Retain()
             {
                 RetainKernel(this);
+            }
+
+            public void Release()
+            {
+                ReleaseKernel(this);
             }
 
             #endregion
@@ -399,22 +388,10 @@ namespace OpenCL.Net
 
             public void Dispose()
             {
-                ReleaseKernel(this);
+                Release();
             }
 
             #endregion
-
-            public static readonly Cl.Kernel Zero = new Cl.Kernel();
-
-            public static bool operator ==(Cl.Kernel a, Cl.Kernel b)
-            {
-                return a._handle == b._handle;
-            }
-
-            public static bool operator !=(Cl.Kernel a, Cl.Kernel b)
-            {
-                return a._handle != b._handle;
-            }
         }
         
         [StructLayout(LayoutKind.Sequential)]
@@ -429,9 +406,14 @@ namespace OpenCL.Net
 
             #region IRefCountedHandle Members
 
-            void IRefCountedHandle.Retain()
+            public void Retain()
             {
                 RetainEvent(this);
+            }
+
+            public void Release()
+            {
+                ReleaseEvent(this);
             }
 
             #endregion
@@ -452,7 +434,7 @@ namespace OpenCL.Net
 
             public void Dispose()
             {
-                ReleaseEvent(this);
+                Release();
             }
 
             #endregion
@@ -470,9 +452,14 @@ namespace OpenCL.Net
 
             #region IRefCountedHandle Members
 
-            void IRefCountedHandle.Retain()
+            public void Retain()
             {
                 RetainSampler(this);
+            }
+
+            public void Release()
+            {
+                ReleaseSampler(this);
             }
 
             #endregion
@@ -493,7 +480,7 @@ namespace OpenCL.Net
 
             public void Dispose()
             {
-                ReleaseSampler(this);
+                Release();
             }
 
             #endregion

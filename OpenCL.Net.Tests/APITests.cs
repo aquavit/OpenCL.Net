@@ -64,7 +64,7 @@ namespace OpenCL.Net.Tests
             Cl.ErrorCode error;
             foreach (Cl.Platform platform in Cl.GetPlatformIDs(out error))
             {
-                if (platform == Cl.Invalid)
+                if (!platform.IsValid())
                     Console.WriteLine("Invalid handle");
                 Console.WriteLine("Platform Name: {0}, version {1}\nPlatform Vendor: {2}",
                                   Cl.GetPlatformInfo(platform, Cl.PlatformInfo.Name, out error),

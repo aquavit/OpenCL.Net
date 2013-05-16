@@ -410,5 +410,10 @@ namespace OpenCL.Net
 
             return arr;
         }
+
+        public static bool IsValid(this IHandle handle)
+        {
+            return ((IHandleData)handle).Handle != IntPtr.Zero;
+        }
     }
 }
