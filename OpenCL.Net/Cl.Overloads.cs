@@ -128,12 +128,29 @@ namespace OpenCL.Net
 
         #region Memory Object API
 
-        public static Mem CreateBuffer(Context context, MemFlags flags, int size, object hostData, out ErrorCode errcodeRet)
+        public static IMem CreateBuffer(Context context, MemFlags flags, int size, out ErrorCode errcodeRet)
         {
-            return CreateBuffer(context, flags, (IntPtr)size, hostData, out errcodeRet);
+            return CreateBuffer(context, flags, (IntPtr)size, null, out errcodeRet);
         }
 
-        public static InfoBuffer GetMemObjectInfo(Mem mem, MemInfo paramName, out ErrorCode error)
+        public static IMem CreateBuffer(Context context, MemFlags flags, IntPtr size, out ErrorCode errcodeRet)
+        {
+            return CreateBuffer(context, flags, size, null, out errcodeRet);
+        }
+
+        public static IMem<T> CreateBuffer<T>(Context context, MemFlags flags, T[] hostData, out ErrorCode errcodeRet)
+            where T : struct
+        {
+            return new Mem<T>(CreateBuffer(context, flags, (IntPtr)(TypeSize<T>.SizeInt * hostData.Length), hostData, out errcodeRet));
+        }
+
+        public static IMem<T> CreateBuffer<T>(Context context, MemFlags flags, int length, out ErrorCode errcodeRet)
+            where T : struct
+        {
+            return new Mem<T>(CreateBuffer(context, flags, (IntPtr)(TypeSize<T>.SizeInt * length), null, out errcodeRet));
+        }
+
+        public static InfoBuffer GetMemObjectInfo(IMem mem, MemInfo paramName, out ErrorCode error)
         {
             if (paramName == MemInfo.HostPtr) // Handle special case
             {
@@ -149,7 +166,7 @@ namespace OpenCL.Net
             return GetInfo(GetMemObjectInfo, mem, paramName, out error);
         }
 
-        public static InfoBuffer GetImageInfo(Mem image, ImageInfo paramName, out ErrorCode error)
+        public static InfoBuffer GetImageInfo(IMem image, ImageInfo paramName, out ErrorCode error)
         {
             return GetInfo(GetImageInfo, image, paramName, out error);
         }
@@ -193,7 +210,21 @@ namespace OpenCL.Net
         }
 
         public static ErrorCode EnqueueReadBuffer<T>(CommandQueue commandQueue,
-                                                  Mem buffer,
+                                                  IMem buffer,
+                                                  Bool blockingRead,
+                                                  int offset,
+                                                  int length,
+                                                  T[] data,
+                                                  int numEventsInWaitList,
+                                                  Event[] eventWaitList,
+                                                  out Event e) where T : struct
+        {
+            var elementSize = (int)TypeSize<T>.Size;
+            return EnqueueReadBuffer(commandQueue, buffer, blockingRead, (IntPtr)(offset * elementSize), (IntPtr)(length * elementSize), data, (uint)numEventsInWaitList, eventWaitList, out e);
+        }
+
+        public static ErrorCode EnqueueReadBuffer<T>(CommandQueue commandQueue,
+                                                  IMem<T> buffer,
                                                   Bool blockingRead,
                                                   int offset,
                                                   int length,
@@ -207,7 +238,7 @@ namespace OpenCL.Net
         }
 
         public static ErrorCode EnqueueReadBuffer<T>(CommandQueue commandQueue,
-                                                  Mem buffer,
+                                                  IMem<T> buffer,
                                                   Bool blockingRead,
                                                   T[] data,
                                                   int numEventsInWaitList,
@@ -218,7 +249,7 @@ namespace OpenCL.Net
         }
 
         public static ErrorCode EnqueueWriteBuffer<T>(CommandQueue commandQueue,
-                                                   Mem buffer,
+                                                   IMem<T> buffer,
                                                    Bool blockingWrite,
                                                    int offset,
                                                    int length,
@@ -232,7 +263,7 @@ namespace OpenCL.Net
         }
 
         public static ErrorCode EnqueueWriteBuffer<T>(CommandQueue commandQueue,
-                                                   Mem buffer,
+                                                   IMem<T> buffer,
                                                    Bool blockingWrite,
                                                    T[] data,
                                                    int numEventsInWaitList,
@@ -275,6 +306,12 @@ namespace OpenCL.Net
             where T: struct
         { 
             return SetKernelArg(kernel, argIndex, (IntPtr)TypeSize<T>.Size, value);
+        }
+
+        public static ErrorCode SetKernelArg<T>(Kernel kernel, uint argIndex, int length)
+        {
+            var size = TypeSize<T>.SizeInt * length;
+            return SetKernelArg(kernel, argIndex, (IntPtr)size, null);
         }
 
         #endregion

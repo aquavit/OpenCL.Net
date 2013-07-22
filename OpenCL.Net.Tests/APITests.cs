@@ -192,7 +192,7 @@ namespace OpenCL.Net.Tests
             Random random = new Random();
 
             float[] values = (from value in Enumerable.Range(0, bufferSize) select (float)random.NextDouble()).ToArray();
-            Cl.Mem buffer = Cl.CreateBuffer(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, (IntPtr)(sizeof (float) * bufferSize), values, out error);
+            Cl.IMem buffer = Cl.CreateBuffer(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, (IntPtr)(sizeof (float) * bufferSize), values, out error);
             Assert.AreEqual(error, Cl.ErrorCode.Success);
 
             Assert.AreEqual(Cl.GetMemObjectInfo(buffer, Cl.MemInfo.Type, out error).CastTo<Cl.MemObjectType>(), Cl.MemObjectType.Buffer);
@@ -222,7 +222,7 @@ namespace OpenCL.Net.Tests
 
             {
                 var image2DData = new float[200 * 200 * sizeof(float)];
-                Cl.Mem image2D = Cl.CreateImage2D(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, new Cl.ImageFormat(Cl.ChannelOrder.RGBA, Cl.ChannelType.Float),
+                Cl.IMem image2D = Cl.CreateImage2D(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, new Cl.ImageFormat(Cl.ChannelOrder.RGBA, Cl.ChannelType.Float),
                                                   (IntPtr)200, (IntPtr)200, (IntPtr)0, image2DData, out error);
                 Assert.AreEqual(error, Cl.ErrorCode.Success);
 
@@ -234,7 +234,7 @@ namespace OpenCL.Net.Tests
 
             {
                 var image3DData = new float[200 * 200 * 200 * sizeof(float)];
-                Cl.Mem image3D = Cl.CreateImage3D(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, new Cl.ImageFormat(Cl.ChannelOrder.RGBA, Cl.ChannelType.Float),
+                Cl.IMem image3D = Cl.CreateImage3D(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, new Cl.ImageFormat(Cl.ChannelOrder.RGBA, Cl.ChannelType.Float),
                                                   (IntPtr)200, (IntPtr)200, (IntPtr)200, IntPtr.Zero, IntPtr.Zero, image3DData, out error);
                 Assert.AreEqual(error, Cl.ErrorCode.Success);
 
@@ -394,11 +394,15 @@ namespace OpenCL.Net.Tests
                     B[i] = rand.Next() % 256;
                 }
 
-                Cl.Mem hDeviceMemA = Cl.CreateBuffer(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, (IntPtr)(sizeof(float) * cnDimension.ToInt32()), A, out error);
+                //Cl.IMem hDeviceMemA = Cl.CreateBuffer(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, (IntPtr)(sizeof(float) * cnDimension.ToInt32()), A, out error);
+                //Assert.AreEqual(Cl.ErrorCode.Success, error);
+                
+                Cl.IMem<float> hDeviceMemA = Cl.CreateBuffer(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, A, out error);
                 Assert.AreEqual(Cl.ErrorCode.Success, error);
-                Cl.Mem hDeviceMemB = Cl.CreateBuffer(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, (IntPtr)(sizeof(float) * cnDimension.ToInt32()), B, out error);
+
+                Cl.IMem hDeviceMemB = Cl.CreateBuffer(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.ReadOnly, (IntPtr)(sizeof(float) * cnDimension.ToInt32()), B, out error);
                 Assert.AreEqual(Cl.ErrorCode.Success, error);
-                Cl.Mem hDeviceMemC = Cl.CreateBuffer(_context, Cl.MemFlags.CopyHostPtr | Cl.MemFlags.WriteOnly, (IntPtr)(sizeof(float) * cnDimension.ToInt32()), IntPtr.Zero, out error);
+                Cl.IMem hDeviceMemC = Cl.CreateBuffer(_context, Cl.MemFlags.WriteOnly, (IntPtr)(sizeof(float) * cnDimension.ToInt32()), IntPtr.Zero, out error);
                 Assert.AreEqual(Cl.ErrorCode.Success, error);
 
                 Cl.CommandQueue cmdQueue = Cl.CreateCommandQueue(_context, _device, (Cl.CommandQueueProperties)0, out error);

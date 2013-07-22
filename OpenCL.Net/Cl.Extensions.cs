@@ -398,6 +398,15 @@ namespace OpenCL.Net
             return error;
         }
 
+        public static ErrorCode Check(this ErrorCode error)
+        {
+            error.OnAnyError(e =>
+            {
+                throw new Cl.Exception(e);
+            });
+            return error;
+        }
+
         public static PinnedObject Pin(this object obj)
         {
             return new PinnedObject(obj);

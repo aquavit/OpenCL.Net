@@ -21,15 +21,15 @@ using System.Runtime.InteropServices;
 
 //General assembly information
 
-[assembly: AssemblyCompany("Ananth B.")]
+[assembly: AssemblyCompany("Ananth Balasubramaniam")]
 [assembly: AssemblyProduct("OpenCL.Net: .NET bindings for OpenCL")]
-[assembly: AssemblyCopyright("Copyright © Ananth B. 2010")]
+[assembly: AssemblyCopyright("Copyright © Ananth Balasubramaniam 2010")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 //Assembly version information
 
-[assembly: AssemblyVersion("1.3.5.0")]
+[assembly: AssemblyVersion("1.4.2.0")]
 
 //CLS compliance. False. OpenCL needs access to signed and unsigned types.
 

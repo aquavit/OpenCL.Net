@@ -205,8 +205,16 @@ namespace OpenCL.Net
             public static readonly Context Zero = new Context(IntPtr.Zero);
         }
 
+        public interface IMem: IDisposable
+        { 
+        }
+
+        public interface IMem<T> : IMem
+            where T: struct
+        { }
+
         [StructLayout(LayoutKind.Sequential)]
-        public struct Mem : IRefCountedHandle, IEquatable<Cl.Mem>
+        public struct Mem : IMem, IRefCountedHandle, IEquatable<Cl.Mem>
         {
             private readonly IntPtr _handle;
 
@@ -251,6 +259,62 @@ namespace OpenCL.Net
             #endregion
 
             public bool Equals(Mem other)
+            {
+                return _handle.ToInt64() == other._handle.ToInt64();
+            }
+        }
+
+        public struct Mem<T> : IMem<T>, IRefCountedHandle, IEquatable<Mem<T>>
+            where T : struct
+        {
+            private readonly IntPtr _handle;
+
+            internal Mem(IntPtr handle)
+            {
+                _handle = handle;
+            }
+
+            internal Mem(IMem mem)
+            {
+                _handle = ((IHandleData)mem).Handle;
+            }
+
+            #region IRefCountedHandle Members
+
+            public void Retain()
+            {
+                RetainMemObject(this);
+            }
+
+            public void Release()
+            {
+                ReleaseMemObject(this);
+            }
+
+            #endregion
+
+            #region IHandleData Members
+
+            IntPtr IHandleData.Handle
+            {
+                get
+                {
+                    return _handle;
+                }
+            }
+
+            #endregion
+
+            #region IDisposable Members
+
+            public void Dispose()
+            {
+                Release();
+            }
+
+            #endregion
+
+            public bool Equals(Mem<T> other)
             {
                 return _handle.ToInt64() == other._handle.ToInt64();
             }
@@ -515,6 +579,7 @@ namespace OpenCL.Net
         internal sealed class TypeSize<T>
         {
             public static readonly IntPtr Size = (IntPtr)Marshal.SizeOf(typeof(T));
+            public static readonly int SizeInt = Marshal.SizeOf(typeof(T));
         }
     }
 }

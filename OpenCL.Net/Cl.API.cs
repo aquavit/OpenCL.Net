@@ -166,27 +166,27 @@ namespace OpenCL.Net
                                                     MemFlags flags, 
                                                     IntPtr size, IntPtr hostPtr,
                                                     [Out] [MarshalAs(UnmanagedType.I4)] out ErrorCode errcodeRet);
-        public static Mem CreateBuffer(Context context, MemFlags flags, IntPtr size, object hostData, out ErrorCode errcodeRet)
-        {
-            using (var hostPtr = hostData.Pin())
-                return new Mem(clCreateBuffer((context as IHandleData).Handle, flags, size, hostPtr, out errcodeRet));
-        }
-
-        public static Mem CreateBuffer(Context context, MemFlags flags, IntPtr size, IntPtr hostPtr, out ErrorCode errcodeRet)
+        public static IMem CreateBuffer(Context context, MemFlags flags, IntPtr size, IntPtr hostPtr, out ErrorCode errcodeRet)
         {
             return new Mem(clCreateBuffer((context as IHandleData).Handle, flags, size, hostPtr, out errcodeRet));
         }
 
+        public static IMem CreateBuffer(Context context, MemFlags flags, IntPtr size, object hostData, out ErrorCode errcodeRet)
+        {
+            using (var hostPtr = hostData.Pin())
+                return CreateBuffer(context, flags, size, hostPtr, out errcodeRet);
+        }
+
         [DllImport(Library)]
         private static extern ErrorCode clRetainMemObject(IntPtr memObj);
-        public static ErrorCode RetainMemObject(Mem memObj)
+        public static ErrorCode RetainMemObject(IMem memObj)
         {
             return clRetainMemObject((memObj as IRefCountedHandle).Handle);
         }
 
         [DllImport(Library)]
         private static extern ErrorCode clReleaseMemObject(IntPtr memObj);
-        public static ErrorCode ReleaseMemObject(Mem memObj)
+        public static ErrorCode ReleaseMemObject(IMem memObj)
         {
             return clReleaseMemObject((memObj as IRefCountedHandle).Handle);
         }
@@ -217,7 +217,7 @@ namespace OpenCL.Net
                                                      IntPtr imageRowPitch,
                                                      IntPtr hostPtr,
                                                      out ErrorCode errcodeRet);
-        public static Mem CreateImage2D(Context context,
+        public static IMem CreateImage2D(Context context,
                                         MemFlags flags,
                                         ImageFormat imageFormat,
                                         IntPtr imageWidth,
@@ -230,7 +230,7 @@ namespace OpenCL.Net
             using (var imageFormatPtr = imageFormat.Pin())
                 return new Mem(clCreateImage2D((context as IHandleData).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageRowPitch, hostPtr, out errorcodeRet));
         }
-        public static Mem CreateImage2D(Context context,
+        public static IMem CreateImage2D(Context context,
                                         MemFlags flags,
                                         ImageFormat imageFormat,
                                         IntPtr imageWidth,
@@ -254,7 +254,7 @@ namespace OpenCL.Net
                                                      IntPtr imageSlicePitch,
                                                      IntPtr hostPtr,
                                                      out ErrorCode errcodeRet);
-        public static Mem CreateImage3D(Context context,
+        public static IMem CreateImage3D(Context context,
                                         MemFlags flags,
                                         ImageFormat imageFormat,
                                         IntPtr imageWidth,
@@ -269,7 +269,7 @@ namespace OpenCL.Net
             using (var imageFormatPtr = imageFormat.Pin())
                 return new Mem(clCreateImage3D((context as IHandleData).Handle, flags, imageFormatPtr, imageWidth, imageHeight, imageDepth, imageRowPitch, imageSlicePitch, hostPtr, out errcodeRet));
         }
-        public static Mem CreateImage3D(Context context,
+        public static IMem CreateImage3D(Context context,
                                         MemFlags flags,
                                         ImageFormat imageFormat,
                                         IntPtr imageWidth,
@@ -291,7 +291,7 @@ namespace OpenCL.Net
                                                            IntPtr paramValueSize, 
                                                            IntPtr paramValue, 
                                                            out IntPtr paramValueSizeRet);
-        public static ErrorCode GetMemObjectInfo(Mem memObj,
+        public static ErrorCode GetMemObjectInfo(IMem memObj,
                                                  MemInfo paramName,
                                                  IntPtr paramValueSize,
                                                  InfoBuffer paramValue,
@@ -306,7 +306,7 @@ namespace OpenCL.Net
                                                        IntPtr paramValueSize, 
                                                        IntPtr paramValue, 
                                                        out IntPtr paramValueSizeRet);
-        public static ErrorCode GetImageInfo(Mem image,
+        public static ErrorCode GetImageInfo(IMem image,
                                              ImageInfo paramName,
                                              IntPtr paramValueSize,
                                              InfoBuffer paramValue,
@@ -482,7 +482,7 @@ namespace OpenCL.Net
         public static ErrorCode SetKernelArg(Kernel kernel, uint argIndex, IntPtr argSize, object argValue)
         {
             using (var argPtr = argValue.Pin())
-                return clSetKernelArg((kernel as IHandleData).Handle, argIndex, argSize, argPtr);
+                return clSetKernelArg((kernel as IHandleData).Handle, argIndex, argSize, argValue == null ? IntPtr.Zero : argPtr);
         }
 
         [DllImport(Library)]
@@ -579,7 +579,7 @@ namespace OpenCL.Net
                                                             [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 6)] Event[] eventWaitList,
                                                             [Out] [MarshalAs(UnmanagedType.Struct)] out Event e);
         public static ErrorCode EnqueueReadBuffer(CommandQueue commandQueue,
-                                                  Mem buffer,
+                                                  IMem buffer,
                                                   Bool blockingRead,
                                                   IntPtr offsetInBytes,
                                                   IntPtr lengthInBytes,
@@ -593,7 +593,7 @@ namespace OpenCL.Net
                                            blockingRead, offsetInBytes, lengthInBytes, dataPtr, numEventsInWaitList, eventWaitList, out e);
         }
         public static ErrorCode EnqueueReadBuffer(CommandQueue commandQueue,
-                                                  Mem buffer,
+                                                  IMem buffer,
                                                   Bool blockingRead,
                                                   IntPtr offsetInBytes,
                                                   IntPtr lengthInBytes,
@@ -617,7 +617,7 @@ namespace OpenCL.Net
                                                              [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 6)] Event[] eventWaitList,
                                                              [Out] [MarshalAs(UnmanagedType.Struct)] out Event e);
         public static ErrorCode EnqueueWriteBuffer(CommandQueue commandQueue,
-                                                   Mem buffer,
+                                                   IMem buffer,
                                                    Bool blockingWrite,
                                                    IntPtr offsetInBytes,
                                                    IntPtr lengthInBytes,
@@ -630,7 +630,7 @@ namespace OpenCL.Net
                 return clEnqueueWriteBuffer((commandQueue as IHandleData).Handle, (buffer as IHandleData).Handle, blockingWrite, offsetInBytes, lengthInBytes, dataPtr, numEventsInWaitList, eventWaitList, out e);
         }
         public static ErrorCode EnqueueWriteBuffer(CommandQueue commandQueue,
-                                                   Mem buffer,
+                                                   IMem buffer,
                                                    Bool blockingWrite,
                                                    IntPtr offsetInBytes,
                                                    IntPtr lengthInBytes,
@@ -654,8 +654,8 @@ namespace OpenCL.Net
                                                             [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 6)] Event[] eventWaitList,
                                                             [Out] [MarshalAs(UnmanagedType.Struct)] out Event e);
         public static ErrorCode EnqueueCopyBuffer(CommandQueue commandQueue,
-                                                  Mem srcBuffer,
-                                                  Mem dstBuffer,
+                                                  IMem srcBuffer,
+                                                  IMem dstBuffer,
                                                   IntPtr srcOffset,
                                                   IntPtr dstOffset,
                                                   IntPtr cb,
@@ -680,7 +680,7 @@ namespace OpenCL.Net
                                                            [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 8)] Event[] eventWaitList,
                                                            [Out] [MarshalAs(UnmanagedType.Struct)] out Event e);
         public static ErrorCode EnqueueReadImage(CommandQueue commandQueue,
-                                                 Mem image,
+                                                 IMem image,
                                                  Bool blockingRead,
                                                  IntPtr[] origin,
                                                  IntPtr[] region,
@@ -709,7 +709,7 @@ namespace OpenCL.Net
                                                             [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 8)] Event[] eventWaitList,
                                                             [Out] [MarshalAs(UnmanagedType.Struct)] out Event e);
         public static ErrorCode EnqueueWriteImage(CommandQueue commandQueue,
-                                                  Mem image,
+                                                  IMem image,
                                                   Bool blockingWrite,
                                                   IntPtr[] origin,
                                                   IntPtr[] region,
@@ -736,8 +736,8 @@ namespace OpenCL.Net
                                                            [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 6)] Event[] eventWaitList,
                                                            [Out] [MarshalAs(UnmanagedType.Struct)] out Event e);
         public static ErrorCode EnqueueCopyImage(CommandQueue commandQueue,
-                                                 Mem srcImage,
-                                                 Mem dstImage,
+                                                 IMem srcImage,
+                                                 IMem dstImage,
                                                  IntPtr[] srcOrigin,
                                                  IntPtr[] dstOrigin,
                                                  IntPtr[] region,
@@ -760,8 +760,8 @@ namespace OpenCL.Net
                                                                    [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 6)] Event[] eventWaitList,
                                                                    [Out] [MarshalAs(UnmanagedType.Struct)] out Event e);
         public static ErrorCode EnqueueCopyImageToBuffer(CommandQueue commandQueue,
-                                                         Mem srcImage,
-                                                         Mem dstBuffer,
+                                                         IMem srcImage,
+                                                         IMem dstBuffer,
                                                          IntPtr[] srcOrigin,
                                                          IntPtr[] region,
                                                          IntPtr dstOffset,
@@ -784,8 +784,8 @@ namespace OpenCL.Net
                                                                    [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 6)] Event[] eventWaitList,
                                                                    [Out] [MarshalAs(UnmanagedType.Struct)] out Event e);
         public static ErrorCode EnqueueCopyBufferToImage(CommandQueue commandQueue,
-                                                         Mem srcBuffer,
-                                                         Mem dstImage,
+                                                         IMem srcBuffer,
+                                                         IMem dstImage,
                                                          IntPtr srcOffset,
                                                          IntPtr[] dstOrigin,
                                                          IntPtr[] region,
@@ -809,7 +809,7 @@ namespace OpenCL.Net
                                                         [Out] [MarshalAs(UnmanagedType.Struct)] out Event e,
                                                         out ErrorCode errCodeRet);
         public static InfoBuffer EnqueueMapBuffer(CommandQueue commandQueue,
-                                                  Mem buffer,
+                                                  IMem buffer,
                                                   Bool blockingMap,
                                                   MapFlags mapFlags,
                                                   IntPtr offset,
@@ -837,7 +837,7 @@ namespace OpenCL.Net
                                                        [Out] [MarshalAs(UnmanagedType.Struct)] out Event e,
                                                        out ErrorCode errCodeRet);
         public static InfoBuffer EnqueueMapImage(CommandQueue commandQueue,
-                                                 Mem image,
+                                                 IMem image,
                                                  Bool blockingMap,
                                                  MapFlags mapFlags,
                                                  IntPtr[] origin,
@@ -863,7 +863,7 @@ namespace OpenCL.Net
                                                                 [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.SysUInt, SizeParamIndex = 3)] Event[] eventWaitList,
                                                                 [Out] [MarshalAs(UnmanagedType.Struct)] out Event e);
         public static ErrorCode EnqueueUnmapObject(CommandQueue commandQueue,
-                                                   Mem memObj,
+                                                   IMem memObj,
                                                    InfoBuffer mappedObject,
                                                    uint numEventsInWaitList,
                                                    Event[] eventWaitList,
