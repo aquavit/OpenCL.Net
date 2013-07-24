@@ -23,13 +23,38 @@ namespace OpenCL.Net.Tasks
 
         [Output] public ITaskItem[] OutputFiles { get; set; }
 
+        private const string MetadataLink = "Link";
+        private const string MetadataCopyToOutputDirectory = "CopyToOutputDirectory";
+        private const string MetadataFullPath = "FullPath";
+        private const string MetadataIdentity = "Identity";
+
         public bool Execute()
         {
+            var projectDir = Path.GetDirectoryName(BuildEngine.ProjectFileOfTaskNode);
+
             for (int i = 0; i < InputFiles.Length; i++)
             {
                 BuildEngine.LogMessageEvent(new BuildMessageEventArgs(string.Format("Generating kernel wrappers for {0}", Path.GetFileName(InputFiles[i].ItemSpec)), "Kernel", "OpenCL.Net", MessageImportance.High));
+                
+                foreach (var mi in InputFiles[i].MetadataNames)
+                    BuildEngine.LogMessageEvent(new BuildMessageEventArgs(string.Format("\tMetadata: {0}: {1}", mi.ToString(), InputFiles[i].GetMetadata(mi.ToString())), "Kernel", "OpenCL.Net", MessageImportance.High));
+
+                var link = InputFiles[i].GetMetadata(MetadataLink);
+                var isLink = !string.IsNullOrEmpty(link);
+                var identity = InputFiles[i].GetMetadata(MetadataIdentity);
+                var copy = InputFiles[i].GetMetadata(MetadataCopyToOutputDirectory);
+                var copyToOutputDirectory = !string.IsNullOrEmpty(copy) || (copy == "PreserveNewest") || (copy == "Always");
+
+                var embedSource = !copyToOutputDirectory;
+                var outputPath = isLink ? link : identity;
                 File.WriteAllText(OutputFiles[i].ItemSpec,
-                  ProcessKernelFile(InputFiles[i].ItemSpec, File.ReadAllText(InputFiles[i].ItemSpec)));
+                    ProcessKernelFile(InputFiles[i].ItemSpec, File.ReadAllText(InputFiles[i].ItemSpec), embedSource, outputPath));
+
+                if (copyToOutputDirectory)
+                {
+                    InputFiles[i].RemoveMetadata(MetadataCopyToOutputDirectory);
+                    OutputFiles[i].RemoveMetadata(MetadataCopyToOutputDirectory);
+                }
             }
 
             BuildEngine.LogMessageEvent(new BuildMessageEventArgs("Done.", "Kernel", "OpenCL.Net", MessageImportance.High));
@@ -43,7 +68,7 @@ namespace OpenCL.Net.Tasks
         private const string Identifier = "identifier";
         private const string VectorWidth = "vectorWidth";
 
-        private static readonly Regex _kernelParser = new Regex(@"(__)?kernel\s+void\s+(?<kernelName>[\w_]+)\s*\((\s*((__)?(?<qualifier>(global|local))\s+)?(?(qualifier)|(?<qualifier>))(?<datatype>(bool|char|unsigned char|uchar|short|unsigned short|ushort|float|int|unsigned int|uint|long|unsigned long|ulong|size_t))(?<vectorWidth>(16|2|3|4|8)?)\s*(?<pointer>\*?)\s+(?<identifier>[_\w]+)\s*,?\s*)+\)",
+        private static readonly Regex _kernelParser = new Regex(@"(__)?kernel\s+void\s+(?<kernelName>[\w_]+)\s*\((\s*(__)?(?<qualifier>((?<qual>(global|local))\s+)?(?(qual)|(\.?)))(?<datatype>(bool|char|unsigned char|uchar|short|unsigned short|ushort|float|int|unsigned int|uint|long|unsigned long|ulong|size_t))(?<vectorWidth>(16|2|3|4|8)?)\s*(?<pointer>\*?)\s+(?<identifier>[_\w]+)\s*,?\s*)+\)",
             RegexOptions.Singleline | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
         private static string GenerateCSharpCode(CodeCompileUnit compileunit)
@@ -115,13 +140,39 @@ namespace OpenCL.Net.Tasks
             }
         }
 
-        private static string ProcessKernelFile(string filename, string kernelFileContents)
+        private static string ProcessKernelFile(string filename, string kernelFileContents, bool embedSource = true, string outputPath = null)
         {
+            var kernelFilename = Path.GetFileNameWithoutExtension(filename);
+
             var codeUnit = new CodeCompileUnit();
-            var ns = new CodeNamespace(Path.GetFileNameWithoutExtension(filename));
+            var ns = new CodeNamespace(kernelFilename);
             codeUnit.Namespaces.Add(ns);
 
             var lines = kernelFileContents.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+
+            var kernelSource = new CodeTypeDeclaration(kernelFilename + "_Source");
+            kernelSource.Attributes = MemberAttributes.Static | MemberAttributes.Assembly;
+            ns.Types.Add(kernelSource);
+            CodeMemberField sourceString;
+
+            if (embedSource)
+                sourceString = new CodeMemberField(typeof(string), "KernelSource")
+                {
+                    Attributes = MemberAttributes.Const | MemberAttributes.Public,
+                    InitExpression = new CodePrimitiveExpression(kernelFileContents)
+                };
+            else
+                sourceString = new CodeMemberField(typeof(string), "KernelSource")
+                {
+                    Attributes = MemberAttributes.Static | MemberAttributes.Public,
+                    InitExpression = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(File)), "ReadAllText",
+                    new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(Path)), "Combine",
+                        new CodeSnippetExpression("Path.GetDirectoryName(System.AppDomain.CurrentDomain.BaseDirectory)"),
+                        new CodePrimitiveExpression(outputPath))
+                        )
+                };
+
+            kernelSource.Members.Add(sourceString);
 
             foreach (var line in lines)
             {
@@ -131,6 +182,7 @@ namespace OpenCL.Net.Tasks
                     var kernelName = match.Groups[KernelName].Value;
                     var kernel = new CodeTypeDeclaration(kernelName);
                     ns.Types.Add(kernel);
+                    ns.Imports.Add(new CodeNamespaceImport("System.IO"));
                     ns.Imports.Add(new CodeNamespaceImport("OpenCL.Net"));
                     ns.Imports.Add(new CodeNamespaceImport("OpenCL.Net.Extensions"));
 
@@ -140,10 +192,50 @@ namespace OpenCL.Net.Tasks
                     var constructor = new CodeConstructor();
                     kernel.Members.Add(constructor);
 
-                    var constructorParams = new CodeParameterDeclarationExpression(typeof(Cl.CommandQueue), "commandQueue");
+                    var constructorParams = new CodeParameterDeclarationExpression(typeof(Cl.Context), "context");
                     constructor.Parameters.Add(constructorParams);
-                    constructor.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("commandQueue"));
+                    constructor.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("context"));
                     constructor.Attributes = MemberAttributes.Public;
+
+                    var compileMethod = new CodeMemberMethod
+                    {
+                        Name = "Compile",
+                        Attributes = MemberAttributes.Public | MemberAttributes.Final,
+                        ReturnType = new CodeTypeReference(typeof(Cl.ErrorCode)),
+                    };
+                    compileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "errors")
+                    {
+                        Direction = FieldDirection.Out
+                    });
+                    compileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "options = null"));
+
+                    var baseCompile = new CodeMethodReturnStatement(
+                        new CodeMethodInvokeExpression(new CodeBaseReferenceExpression(), "Compile",
+                            new CodeSnippetExpression(kernelFilename + "_Source.KernelSource"),
+                            new CodePrimitiveExpression(kernelName),
+                            new CodeArgumentReferenceExpression("out errors"),
+                            new CodeArgumentReferenceExpression("options")
+                            )
+                        );
+                    compileMethod.Statements.Add(baseCompile);
+                    kernel.Members.Add(compileMethod);
+
+                    compileMethod = new CodeMemberMethod
+                    {
+                        Name = "Compile",
+                        Attributes = MemberAttributes.Public | MemberAttributes.Final,
+                        ReturnType = new CodeTypeReference(typeof(Cl.ErrorCode))
+                    };
+                    compileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "options = null"));
+                    baseCompile = new CodeMethodReturnStatement(
+                        new CodeMethodInvokeExpression(new CodeBaseReferenceExpression(), "Compile",
+                            new CodeSnippetExpression(kernelFilename + "_Source.KernelSource"),
+                            new CodePrimitiveExpression(kernelName),
+                            new CodeArgumentReferenceExpression("options")
+                            )
+                        );
+                    compileMethod.Statements.Add(baseCompile);
+                    kernel.Members.Add(compileMethod);
 
                     var executePrivateMethod = new CodeMemberMethod
                     {
@@ -170,9 +262,18 @@ namespace OpenCL.Net.Tasks
                         ReturnType = new CodeTypeReference(typeof(Cl.Event))
                     };
 
+                    var commandQueueParameter = new CodeParameterDeclarationExpression(typeof(Cl.CommandQueue), "commandQueue");
+                    executePrivateMethod.Parameters.Add(commandQueueParameter);
+                    execute1DMethod.Parameters.Add(commandQueueParameter);
+                    execute2DMethod.Parameters.Add(commandQueueParameter);
+                    execute3DMethod.Parameters.Add(commandQueueParameter);
+
                     var callPrivateExecute1D = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeThisReferenceExpression(), "run"));
                     var callPrivateExecute2D = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeThisReferenceExpression(), "run"));
                     var callPrivateExecute3D = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeThisReferenceExpression(), "run"));
+                    callPrivateExecute1D.Parameters.Add(new CodeArgumentReferenceExpression("commandQueue"));
+                    callPrivateExecute2D.Parameters.Add(new CodeArgumentReferenceExpression("commandQueue"));
+                    callPrivateExecute3D.Parameters.Add(new CodeArgumentReferenceExpression("commandQueue"));
 
                     execute1DMethod.Statements.Add(new CodeMethodReturnStatement(callPrivateExecute1D));
                     execute2DMethod.Statements.Add(new CodeMethodReturnStatement(callPrivateExecute2D));
@@ -189,14 +290,14 @@ namespace OpenCL.Net.Tasks
                         var rawDatatype = match.Groups[Datatype].Captures[i].Value;
                         var name = match.Groups[Identifier].Captures[i].Value;
                         var vectorWidth = match.Groups[VectorWidth].Captures[i].Value == string.Empty ? 0 : int.Parse(match.Groups[VectorWidth].Captures[i].Value);
-                        var qualifier = match.Groups[Qualifier].Captures[i].Value;
+                        var qualifier = match.Groups[Qualifier].Captures[i].Value.Trim();
                         var local = false;
 
                         CodeParameterDeclarationExpression parameter = null;
                         switch (qualifier)
                         {
                             case "global":
-                                parameter = new CodeParameterDeclarationExpression(string.Format("OpenCL.Net.Cl.Mem<{0}>", TranslateType(rawDatatype, vectorWidth)), name);
+                                parameter = new CodeParameterDeclarationExpression(string.Format("OpenCL.Net.Cl.IMem<{0}>", TranslateType(rawDatatype, vectorWidth)), name);
                                 break;
                             case "local":
                                 local = true;
@@ -247,7 +348,7 @@ namespace OpenCL.Net.Tasks
                         new CodeVariableReferenceExpression("err"),
                         // = 
                         new CodeMethodInvokeExpression(new CodeSnippetExpression("OpenCL.Net.Cl"), "EnqueueNDRangeKernel",
-                            new CodePropertyReferenceExpression(new CodeThisReferenceExpression(), "CommandQueue"),
+                            new CodeArgumentReferenceExpression("commandQueue"),
                             new CodePropertyReferenceExpression(new CodeThisReferenceExpression(), "Kernel"),
                             new CodeMethodInvokeExpression(new CodeBaseReferenceExpression(), "GetWorkDimension",
                                 new CodeArgumentReferenceExpression("globalWorkSize0"),
@@ -264,7 +365,7 @@ namespace OpenCL.Net.Tasks
                                 new CodeArgumentReferenceExpression("localWorkSize2")),
 
                             new CodeCastExpression(new CodeTypeReference(typeof(uint)),
-                                new CodePropertyReferenceExpression(new CodeArgumentReferenceExpression("eventWaitList"), "Length")),
+                                new CodeSnippetExpression("eventWaitList == null ? 0 : eventWaitList.Length")),
                             new CodeArgumentReferenceExpression("eventWaitList"),
                             new CodeVariableReferenceExpression("out ev"))));
                     executePrivateMethod.Statements.Add(new CodeMethodInvokeExpression(new CodeSnippetExpression("OpenCL.Net.Cl"), "Check", new CodeVariableReferenceExpression("err")));
@@ -306,12 +407,6 @@ namespace OpenCL.Net.Tasks
             }
 
             return GenerateCSharpCode(codeUnit);
-        }
-
-        private static string ReadFile(string filename)
-        {
-            using (var reader = new StreamReader(filename))
-                return reader.ReadToEnd();
         }
     }
 }

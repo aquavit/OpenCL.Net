@@ -308,6 +308,12 @@ namespace OpenCL.Net
             return SetKernelArg(kernel, argIndex, (IntPtr)TypeSize<T>.Size, value);
         }
 
+        public static ErrorCode SetKernelArg<T>(Kernel kernel, uint argIndex, IMem<T> value)
+            where T : struct
+        {
+            return SetKernelArg(kernel, argIndex, (IntPtr)TypeSize<IntPtr>.Size, value);
+        }
+
         public static ErrorCode SetKernelArg<T>(Kernel kernel, uint argIndex, int length)
         {
             var size = TypeSize<T>.SizeInt * length;

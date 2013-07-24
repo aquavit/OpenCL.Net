@@ -1,0 +1,117 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ Assembly Name="System.Core" #>
+<#@ Import Namespace="System" #>
+<#@ Import Namespace="System.Collections.Generic" #>
+<#@ Import Namespace="System.Linq" #>
+<#@ Import Namespace="System.Runtime.InteropServices" #>
+#region License and Copyright Notice
+// Copyright (c) 2010 Ananth B.
+// All rights reserved.
+// 
+// The contents of this file are made available under the terms of the
+// Eclipse Public License v1.0 (the "License") which accompanies this
+// distribution, and is available at the following URL:
+// http://www.opensource.org/licenses/eclipse-1.0.php
+// 
+// Software distributed under the License is distributed on an "AS IS" basis,
+// WITHOUT WARRANTY OF ANY KIND, either expressed or implied. See the License for
+// the specific language governing rights and limitations under the License.
+// 
+// By using this software in any fashion, you are agreeing to be bound by the
+// terms of the License.
+#endregion
+
+namespace OpenCL.Net
+{
+	using System;
+	using System.Runtime.InteropServices;
+
+	using uchar = System.Byte;
+
+	public interface IVectorType
+	{
+		int Rank { get; }
+		IntPtr Size { get; }
+	}
+
+<# 
+	var types = new[] { "char", "uchar", "short", "ushort", "int", "uint", "long", "ulong", "float", "double" };
+    var typeSizes = new[] { Marshal.SizeOf(typeof(char)), Marshal.SizeOf(typeof(byte)), Marshal.SizeOf(typeof(short)), Marshal.SizeOf(typeof(ushort)), Marshal.SizeOf(typeof(int)), Marshal.SizeOf(typeof(uint)), Marshal.SizeOf(typeof(long)), Marshal.SizeOf(typeof(ulong)), Marshal.SizeOf(typeof(float)), Marshal.SizeOf(typeof(double)) };
+    var ranks = new[] { 2, 3, 4, 8, 16 };
+    var components = 
+	    new[] 
+        { 
+	   		new[] { "x,s0", "y,s1" },
+	   		new[] { "x,s0", "y,s1", "z,s2" },
+	   		new[] { "x,s0", "y,s1", "z,s2", "w,s3" },
+            new[] { "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7" },
+            new[] { "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "sa,sA", "sb,sB", "sc,sC", "sd,sD", "se,sE", "sf,sF" }
+		};
+
+    System.Diagnostics.Debug.Assert(types.Length == typeSizes.Length);
+#>
+
+<# 
+	for (var t = 0; t < types.Length; t++)
+	    for (int r = 0; r < ranks.Length; r++)
+		{
+	        var typeName = string.Format("{0}{1}", types[t], ranks[r]);
+#>	
+	[StructLayout(LayoutKind.Explicit)]
+	public struct <#= string.Format("{0}{1}: {2} {{{3}", types[t], ranks[r], "IVectorType",Environment.NewLine) #>
+	<#
+	        int offset = 0;
+			for (int v = 0; v < components[r].Length; v++)
+	        {
+				foreach (var c in components[r][v].Split(','))
+				{ #>
+		[FieldOffset(<#= offset#>)]
+		public <#= types[t] #> <#= c #>;
+		  <#	}
+	            offset += typeSizes[t];
+		    }
+	#>
+
+		public <#= typeName #>(<#= types[t] #> v)
+		{
+			<#
+	        for (int v = 0; v < components[r].Length; v++)
+	        {
+	            foreach (var c in components[r][v].Split(','))
+                {
+				#><#= c #> = <#
+				}
+				#>v;
+<#
+            }
+#>
+		}
+
+		public <#= typeName #>(<#
+	        var signature = string.Join(", ", from r0 in Enumerable.Range(0, ranks[r]) select string.Format("{0} {1}", types[t], components[r][r0].Split(',')[0]));
+            #><#= signature #>) 
+		{
+			<#
+	        for (int v = 0; v < components[r].Length; v++)
+	        {
+	            foreach (var c in components[r][v].Split(','))
+                {
+				#>this.<#= c #> = <#
+				}
+				#><#= components[r][v].Split(',')[0] #>;
+<#
+            }
+#>
+		}
+
+		#region IVectorType implementation
+
+		int IVectorType.Rank { get { return <#= ranks[r] #>; } }
+		public IntPtr Size { get { return (IntPtr)(<#= ranks[r] #> * <#= typeSizes[t] #>); } }
+
+		#endregion
+	}
+		<# }
+#>
+}
