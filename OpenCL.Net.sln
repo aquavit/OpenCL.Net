@@ -13,6 +13,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{116974
 		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{AF179FAF-CAF8-4120-BE8D-FF7FB08FD0E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simple", "Samples\Simple\Simple.csproj", "{71DDA71C-ADD7-47AB-9845-57C393EE8D1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,8 +36,17 @@ Global
 		{CE171313-E106-49F7-914A-87E70EECE45B}.NugetPublish|Any CPU.Build.0 = NugetPublish|Any CPU
 		{CE171313-E106-49F7-914A-87E70EECE45B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CE171313-E106-49F7-914A-87E70EECE45B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71DDA71C-ADD7-47AB-9845-57C393EE8D1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71DDA71C-ADD7-47AB-9845-57C393EE8D1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71DDA71C-ADD7-47AB-9845-57C393EE8D1C}.NugetPublish|Any CPU.ActiveCfg = NugetPublish|Any CPU
+		{71DDA71C-ADD7-47AB-9845-57C393EE8D1C}.NugetPublish|Any CPU.Build.0 = NugetPublish|Any CPU
+		{71DDA71C-ADD7-47AB-9845-57C393EE8D1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71DDA71C-ADD7-47AB-9845-57C393EE8D1C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{71DDA71C-ADD7-47AB-9845-57C393EE8D1C} = {AF179FAF-CAF8-4120-BE8D-FF7FB08FD0E3}
 	EndGlobalSection
 EndGlobal

@@ -109,6 +109,7 @@
     <PreBuildEvent>
     </PreBuildEvent>
     <PostBuildEvent>@echo off
+
 if not $(ConfigurationName)==NugetPublish goto wrongConfiguration
 del /Q *.nupkg
 echo Publishing to Nuget
@@ -116,6 +117,8 @@ $(SolutionDir).nuget\Nuget.exe pack $(ProjectPath) -prop Configuration=$(Configu
 $(SolutionDir).nuget\Nuget push $(ProjectName)*.nupkg
 goto end
 :wrongConfiguration
+echo Copying OpenCL.Net.dll for samples task
+copy $(TargetPath) $(SolutionDir)\Samples\$(TargetFileName) /Y
 echo Current configuration is $(ConfigurationName), not NugetPublish. Aborting publish.
 goto end
 :end</PostBuildEvent>

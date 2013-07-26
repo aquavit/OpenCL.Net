@@ -16,6 +16,7 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Collections.Generic;
@@ -580,6 +581,44 @@ namespace OpenCL.Net
         {
             public static readonly IntPtr Size = (IntPtr)Marshal.SizeOf(typeof(T));
             public static readonly int SizeInt = Marshal.SizeOf(typeof(T));
+        }
+
+        public sealed class Environment: IDisposable
+        {
+            public Context Context { get; private set; }
+            public CommandQueue[] CommandQueues { get; private set; }
+            public Device[] Devices { get; private set; }
+            public DeviceType[] DeviceTypes { get; private set; }
+
+            public Environment(string platformWildCard, DeviceType deviceType = DeviceType.Default,
+                                 CommandQueueProperties commandQueueProperties = CommandQueueProperties.None)
+            {
+                Cl.ErrorCode error;
+
+                Context = Cl.CreateContext(platformWildCard, deviceType, out error);
+                error.Check();
+
+                var deviceInfoBuffer = Cl.GetContextInfo(Context, Cl.ContextInfo.Devices, out error);
+                error.Check();
+                
+                Devices = deviceInfoBuffer.CastToArray<Cl.Device>(deviceInfoBuffer.Size / Marshal.SizeOf(typeof(IntPtr)));
+                
+                DeviceTypes = (from d in Devices select Cl.GetDeviceInfo(d, Cl.DeviceInfo.Type, out error).CastTo<Cl.DeviceType>()).ToArray();
+                error.Check();
+
+                CommandQueues = (from d in Devices select Cl.CreateCommandQueue(Context, d, commandQueueProperties, out error)).ToArray();
+                error.Check();
+            }
+
+            public void Dispose()
+            {
+                foreach (var commandQueue in CommandQueues)
+                    commandQueue.Dispose();
+                CommandQueues = null;
+
+                Context.Dispose();
+                Context = new Cl.Context(); // Invalid
+            }
         }
     }
 }

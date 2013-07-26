@@ -424,5 +424,17 @@ namespace OpenCL.Net
         {
             return ((IHandleData)handle).Handle != IntPtr.Zero;
         }
+
+        public static IMem<T2> Cast<T1, T2>(this IMem<T1> mem)
+            where T1: struct
+            where T2: struct
+        {
+            return new Mem<T2>((mem as IHandleData).Handle);
+        }
+
+        public static uint GetPaddedGlobalWorkSize(this uint workSize, uint localWorkSize)
+        {
+            return (localWorkSize * (uint)(Math.Ceiling((float)workSize / localWorkSize)));
+        }
     }
 }
