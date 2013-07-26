@@ -29,7 +29,7 @@ using System.Runtime.InteropServices;
 
 //Assembly version information
 
-[assembly: AssemblyVersion("1.6.0.0")]
+[assembly: AssemblyVersion("1.6.1.0")]
 
 //CLS compliance. False. OpenCL needs access to signed and unsigned types.
 

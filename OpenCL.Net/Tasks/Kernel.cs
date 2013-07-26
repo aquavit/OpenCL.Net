@@ -191,7 +191,7 @@ namespace OpenCL.Net.Tasks
                 };
 
             kernelSource.Members.Add(sourceString);
-            kernelSource.Members.Add(new CodeMemberField(typeof(string), "KernelPath")
+            kernelSource.Members.Add(new CodeMemberField(typeof(string), "OriginalKernelPath")
                 {
                     Attributes = MemberAttributes.Const | MemberAttributes.Public,
                     InitExpression = new CodePrimitiveExpression(filename)
@@ -362,7 +362,7 @@ namespace OpenCL.Net.Tasks
                     executePrivateMethod.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(uint)), "localWorkSize1 = 0"));
                     executePrivateMethod.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(uint)), "localWorkSize2 = 0"));
 
-                    var eventWaitListParam = new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(Cl.Event[])), "eventWaitList");
+                    var eventWaitListParam = new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(Cl.Event[])), "waitFor");
                     eventWaitListParam.CustomAttributes.Add(new CodeAttributeDeclaration("System.ParamArrayAttribute"));
                     executePrivateMethod.Parameters.Add(eventWaitListParam);
                     executePrivateMethod.Statements.Add(new CodeVariableDeclarationStatement(typeof(Cl.Event), "ev"));
@@ -388,8 +388,8 @@ namespace OpenCL.Net.Tasks
                                 new CodeArgumentReferenceExpression("localWorkSize2")),
 
                             new CodeCastExpression(new CodeTypeReference(typeof(uint)),
-                                new CodeSnippetExpression("eventWaitList.Length")),
-                            new CodeArgumentReferenceExpression("eventWaitList.Length == 0 ? null : eventWaitList"),
+                                new CodeSnippetExpression("waitFor.Length")),
+                            new CodeArgumentReferenceExpression("waitFor.Length == 0 ? null : waitFor"),
                             new CodeVariableReferenceExpression("out ev"))));
                     executePrivateMethod.Statements.Add(new CodeMethodInvokeExpression(new CodeSnippetExpression("OpenCL.Net.Cl"), "Check", new CodeVariableReferenceExpression("err")));
                     executePrivateMethod.Statements.Add(new CodeMethodReturnStatement(new CodeVariableReferenceExpression("ev")));
@@ -399,7 +399,7 @@ namespace OpenCL.Net.Tasks
                     execute1DMethod.Parameters.Add(eventWaitListParam);
                     callPrivateExecute1D.Parameters.Add(new CodeArgumentReferenceExpression("globalWorkSize0: globalWorkSize"));
                     callPrivateExecute1D.Parameters.Add(new CodeArgumentReferenceExpression("localWorkSize0: localWorkSize"));
-                    callPrivateExecute1D.Parameters.Add(new CodeArgumentReferenceExpression("eventWaitList: eventWaitList"));
+                    callPrivateExecute1D.Parameters.Add(new CodeArgumentReferenceExpression("waitFor: waitFor"));
 
                     execute2DMethod.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(uint)), "globalWorkSize0"));
                     execute2DMethod.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(uint)), "globalWorkSize1"));
@@ -410,7 +410,7 @@ namespace OpenCL.Net.Tasks
                     callPrivateExecute2D.Parameters.Add(new CodeArgumentReferenceExpression("globalWorkSize1: globalWorkSize1"));
                     callPrivateExecute2D.Parameters.Add(new CodeArgumentReferenceExpression("localWorkSize0: localWorkSize0"));
                     callPrivateExecute2D.Parameters.Add(new CodeArgumentReferenceExpression("localWorkSize1: localWorkSize1"));
-                    callPrivateExecute2D.Parameters.Add(new CodeArgumentReferenceExpression("eventWaitList: eventWaitList"));
+                    callPrivateExecute2D.Parameters.Add(new CodeArgumentReferenceExpression("waitFor: waitFor"));
 
                     execute3DMethod.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(uint)), "globalWorkSize0"));
                     execute3DMethod.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(uint)), "globalWorkSize1"));
@@ -425,7 +425,7 @@ namespace OpenCL.Net.Tasks
                     callPrivateExecute3D.Parameters.Add(new CodeArgumentReferenceExpression("localWorkSize0: localWorkSize0"));
                     callPrivateExecute3D.Parameters.Add(new CodeArgumentReferenceExpression("localWorkSize1: localWorkSize1"));
                     callPrivateExecute3D.Parameters.Add(new CodeArgumentReferenceExpression("localWorkSize2: localWorkSize2"));
-                    callPrivateExecute3D.Parameters.Add(new CodeArgumentReferenceExpression("eventWaitList: eventWaitList"));
+                    callPrivateExecute3D.Parameters.Add(new CodeArgumentReferenceExpression("waitFor: waitFor"));
                 }
             }
 

@@ -41,7 +41,7 @@ namespace Simple
                 Cl.MemFlags.WriteOnly);
 
             var kernel = new Kernel.doSomething(env.Context);
-            kernel.Compile(string.Format("-cl-opt-disable -g -s \"{0}\"", Kernel.Kernel_Source.KernelPath));
+            kernel.Compile(string.Format("-cl-opt-disable -g -s \"{0}\"", Kernel.Kernel_Source.OriginalKernelPath));
 
             var kernelRun = kernel.Run(env.CommandQueues[0], a, b, 10f, ArrayLength);
             var results = new float[ArrayLength];
