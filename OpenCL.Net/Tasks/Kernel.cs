@@ -16,8 +16,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.CodeDom;
 
@@ -166,7 +164,7 @@ namespace OpenCL.Net.Tasks
             var ns = new CodeNamespace(kernelFilename);
             codeUnit.Namespaces.Add(ns);
 
-            var lines = kernelFileContents.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = kernelFileContents.Split(new[] { System.Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
 
             var kernelSource = new CodeTypeDeclaration(kernelFilename + "_Source");
             kernelSource.Attributes = MemberAttributes.Static | MemberAttributes.Assembly;
@@ -215,7 +213,7 @@ namespace OpenCL.Net.Tasks
                     var constructor = new CodeConstructor();
                     kernel.Members.Add(constructor);
 
-                    var constructorParams = new CodeParameterDeclarationExpression(typeof(Cl.Context), "context");
+                    var constructorParams = new CodeParameterDeclarationExpression(typeof(Context), "context");
                     constructor.Parameters.Add(constructorParams);
                     constructor.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("context"));
                     constructor.Attributes = MemberAttributes.Public;
@@ -224,7 +222,7 @@ namespace OpenCL.Net.Tasks
                     {
                         Name = "Compile",
                         Attributes = MemberAttributes.Public | MemberAttributes.Final,
-                        ReturnType = new CodeTypeReference(typeof(Cl.ErrorCode)),
+                        ReturnType = new CodeTypeReference(typeof(ErrorCode)),
                     };
                     compileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "errors")
                     {
@@ -247,7 +245,7 @@ namespace OpenCL.Net.Tasks
                     {
                         Name = "Compile",
                         Attributes = MemberAttributes.Public | MemberAttributes.Final,
-                        ReturnType = new CodeTypeReference(typeof(Cl.ErrorCode))
+                        ReturnType = new CodeTypeReference(typeof(ErrorCode))
                     };
                     compileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "options = null"));
                     baseCompile = new CodeMethodReturnStatement(
@@ -264,28 +262,28 @@ namespace OpenCL.Net.Tasks
                     {
                         Name = "run",
                         Attributes = MemberAttributes.Private | MemberAttributes.Final,
-                        ReturnType = new CodeTypeReference(typeof(Cl.Event))
+                        ReturnType = new CodeTypeReference(typeof(Event))
                     };
                     var execute1DMethod = new CodeMemberMethod
                     {
                         Name = "Run",
                         Attributes = MemberAttributes.Public | MemberAttributes.Final,
-                        ReturnType = new CodeTypeReference(typeof(Cl.Event))
+                        ReturnType = new CodeTypeReference(typeof(Event))
                     };
                     var execute2DMethod = new CodeMemberMethod
                     {
                         Name = "Run",
                         Attributes = MemberAttributes.Public | MemberAttributes.Final,
-                        ReturnType = new CodeTypeReference(typeof(Cl.Event))
+                        ReturnType = new CodeTypeReference(typeof(Event))
                     };
                     var execute3DMethod = new CodeMemberMethod
                     {
                         Name = "Run",
                         Attributes = MemberAttributes.Public | MemberAttributes.Final,
-                        ReturnType = new CodeTypeReference(typeof(Cl.Event))
+                        ReturnType = new CodeTypeReference(typeof(Event))
                     };
 
-                    var commandQueueParameter = new CodeParameterDeclarationExpression(typeof(Cl.CommandQueue), "commandQueue");
+                    var commandQueueParameter = new CodeParameterDeclarationExpression(typeof(CommandQueue), "commandQueue");
                     executePrivateMethod.Parameters.Add(commandQueueParameter);
                     execute1DMethod.Parameters.Add(commandQueueParameter);
                     execute2DMethod.Parameters.Add(commandQueueParameter);
@@ -320,7 +318,7 @@ namespace OpenCL.Net.Tasks
                         switch (qualifier)
                         {
                             case "global":
-                                parameter = new CodeParameterDeclarationExpression(string.Format("OpenCL.Net.Cl.IMem<{0}>", TranslateType(rawDatatype, vectorWidth)), name);
+                                parameter = new CodeParameterDeclarationExpression(string.Format("OpenCL.Net.IMem<{0}>", TranslateType(rawDatatype, vectorWidth)), name);
                                 break;
                             case "local":
                                 local = true;
@@ -362,11 +360,11 @@ namespace OpenCL.Net.Tasks
                     executePrivateMethod.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(uint)), "localWorkSize1 = 0"));
                     executePrivateMethod.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(uint)), "localWorkSize2 = 0"));
 
-                    var eventWaitListParam = new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(Cl.Event[])), "waitFor");
+                    var eventWaitListParam = new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(Event[])), "waitFor");
                     eventWaitListParam.CustomAttributes.Add(new CodeAttributeDeclaration("System.ParamArrayAttribute"));
                     executePrivateMethod.Parameters.Add(eventWaitListParam);
-                    executePrivateMethod.Statements.Add(new CodeVariableDeclarationStatement(typeof(Cl.Event), "ev"));
-                    executePrivateMethod.Statements.Add(new CodeVariableDeclarationStatement(typeof(Cl.ErrorCode), "err"));
+                    executePrivateMethod.Statements.Add(new CodeVariableDeclarationStatement(typeof(Event), "ev"));
+                    executePrivateMethod.Statements.Add(new CodeVariableDeclarationStatement(typeof(ErrorCode), "err"));
                     executePrivateMethod.Statements.Add(new CodeAssignStatement(
                         new CodeVariableReferenceExpression("err"),
                         // = 

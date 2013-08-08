@@ -16,16 +16,36 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 using OpenCL.Net.Extensions;
-using System.IO;
 using OpenCL.Net;
 
 namespace Simple
 {
+    public struct Test
+    {
+    }
+
+    [DebuggerTypeProxy(typeof(MyTypeProxy<>))]
+    struct MyType<T>
+    {
+    }
+
+    class MyTypeProxy<T>
+    {
+        MyType<T> type;
+        public MyTypeProxy(MyType<T> type)
+        {
+            this.type = type;
+        }
+        public string Hash
+        {
+            get { return type.GetHashCode().ToString(); }
+        }
+    }
+
     class Program
     {
         private const int ArrayLength = 1024;
@@ -35,10 +55,10 @@ namespace Simple
             var env = "*Intel*".CreateCLEnvironment();
 
             var random = new Random();
-            var a = env.Context.CreateBuffer<float>((from i in Enumerable.Range(0, ArrayLength) select (float)random.NextDouble()).ToArray(), 
-                Cl.MemFlags.ReadOnly);
-            var b = env.Context.CreateBuffer<float>((from i in Enumerable.Range(0, ArrayLength) select (float)random.NextDouble()).ToArray(), 
-                Cl.MemFlags.WriteOnly);
+            var a = env.Context.CreateBuffer((from i in Enumerable.Range(0, ArrayLength) select (float)random.NextDouble()).ToArray(), 
+                MemFlags.ReadOnly);
+            var b = env.Context.CreateBuffer((from i in Enumerable.Range(0, ArrayLength) select (float)random.NextDouble()).ToArray(), 
+                MemFlags.WriteOnly);
 
             var kernel = new Kernel.doSomething(env.Context);
             kernel.Compile(string.Format("-cl-opt-disable -g -s \"{0}\"", Kernel.Kernel_Source.OriginalKernelPath));

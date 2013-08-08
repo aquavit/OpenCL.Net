@@ -25,6 +25,7 @@
 namespace OpenCL.Net
 {
 	using System;
+	using System.Diagnostics;
 	using System.Runtime.InteropServices;
 
 	using uchar = System.Byte;
@@ -57,8 +58,12 @@ namespace OpenCL.Net
 	    for (int r = 0; r < ranks.Length; r++)
 		{
 	        var typeName = string.Format("{0}{1}", types[t], ranks[r]);
+            var debuggerDisplay = string.Join(", ", (from cNames in components[r]
+                                                     let c = cNames.Split(',')[0]
+                                                     select c + "={" + c + "}").ToArray());
 #>	
 	[StructLayout(LayoutKind.Explicit)]
+	[DebuggerDisplay("<#= debuggerDisplay #>")]
 	public struct <#= string.Format("{0}{1}: {2} {{{3}", types[t], ranks[r], "IVectorType",Environment.NewLine) #>
 	<#
 	        int offset = 0;

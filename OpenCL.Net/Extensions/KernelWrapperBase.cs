@@ -25,10 +25,10 @@ namespace OpenCL.Net.Extensions
 {
     public abstract class KernelWrapperBase
     {
-        private Cl.Kernel _kernel;
-        private readonly Cl.Context _context;
+        private Kernel _kernel;
+        private readonly Context _context;
         
-        protected KernelWrapperBase(Cl.Context context)
+        protected KernelWrapperBase(Context context)
         {
             _context = context;
         }
@@ -56,39 +56,39 @@ namespace OpenCL.Net.Extensions
                     return new[] { (IntPtr)x, (IntPtr)y, (IntPtr)z };
 
                 default:
-                    throw new Cl.Exception(Cl.ErrorCode.InvalidWorkDimension);
+                    throw new Cl.Exception(ErrorCode.InvalidWorkDimension);
             }
         }
 
-        protected Cl.ErrorCode Compile(string source, string kernelName, out string errors, string options = null)
+        protected ErrorCode Compile(string source, string kernelName, out string errors, string options = null)
         {
             errors = string.Empty;
-            Cl.ErrorCode error;
-            var devicesInfoBuffer = Cl.GetContextInfo(_context, Cl.ContextInfo.Devices, out error);
-            var devices = devicesInfoBuffer.CastToArray<Cl.Device>((devicesInfoBuffer.Size / Marshal.SizeOf(typeof(Cl.Device))));
+            ErrorCode error;
+            var devicesInfoBuffer = Cl.GetContextInfo(_context, ContextInfo.Devices, out error);
+            var devices = devicesInfoBuffer.CastToArray<Device>((devicesInfoBuffer.Size / Marshal.SizeOf(typeof(Device))));
             var program = Cl.CreateProgramWithSource(_context, 1, new[] { source }, new[] { (IntPtr)source.Length }, out error);
             error = Cl.BuildProgram(program, (uint)devices.Length, devices, options == null ? string.Empty : options, null, IntPtr.Zero);
-            if (error != Cl.ErrorCode.Success)
+            if (error != ErrorCode.Success)
             {
                 errors = string.Join("\n", from device in devices
-                                            select Cl.GetProgramBuildInfo(program, device, Cl.ProgramBuildInfo.Log, out error).ToString());
+                                            select Cl.GetProgramBuildInfo(program, device, ProgramBuildInfo.Log, out error).ToString());
                 throw new Cl.Exception(error, errors);
             }
             _kernel = Cl.CreateKernel(program, kernelName, out error);
             return error;
         }
 
-        protected Cl.ErrorCode Compile(string kernelSource, string kernelName, string options = null)
+        protected ErrorCode Compile(string kernelSource, string kernelName, string options = null)
         {
             string errors;
             var result = Compile(kernelSource, kernelName, out errors, options);
-            if (result != Cl.ErrorCode.Success)
+            if (result != ErrorCode.Success)
                 throw new Cl.Exception(result, errors);
 
             return result;
         }
 
-        public Cl.Context Context { get { return _context; } }
-        public Cl.Kernel Kernel { get { return _kernel; } }
+        public Context Context { get { return _context; } }
+        public Kernel Kernel { get { return _kernel; } }
     }
 }

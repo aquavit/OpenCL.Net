@@ -87,11 +87,11 @@ namespace OpenCL.Net
             Replace("\\?", ".") + "$", RegexOptions.IgnoreCase);
         }
 
-        public static Cl.Context CreateContext(string platformWildCard, DeviceType deviceType, out ErrorCode error)
+        public static Context CreateContext(string platformWildCard, DeviceType deviceType, out ErrorCode error)
         {
             var platformNameRegex = WildcardToRegex(platformWildCard);
             
-            Cl.Platform? currentPlatform = null;
+            Platform? currentPlatform = null;
             foreach (Platform platform in GetPlatformIDs(out error))
                 if (platformNameRegex.Match(GetPlatformInfo(platform, PlatformInfo.Name, out error).ToString()).Success)
                 {
@@ -154,7 +154,7 @@ namespace OpenCL.Net
         {
             if (paramName == MemInfo.HostPtr) // Handle special case
             {
-                IntPtr size = GetInfo(Cl.GetMemObjectInfo, mem, Cl.MemInfo.Size, out error).CastTo<IntPtr>();
+                IntPtr size = GetInfo(Cl.GetMemObjectInfo, mem, MemInfo.Size, out error).CastTo<IntPtr>();
                 var buffer = new InfoBuffer(size);
                 error = GetMemObjectInfo(mem, paramName, size, buffer, out size);
                 if (error != ErrorCode.Success)
@@ -281,12 +281,12 @@ namespace OpenCL.Net
         {
             uint numKernelsRet;
             error = CreateKernelsInProgram(program, 0, null, out numKernelsRet);
-            if (error != Cl.ErrorCode.Success)
+            if (error != ErrorCode.Success)
                 return null;
 
             var result = new Kernel[numKernelsRet];
             error = CreateKernelsInProgram(program, numKernelsRet, result, out numKernelsRet);
-            if (error != Cl.ErrorCode.Success)
+            if (error != ErrorCode.Success)
                 return null;
 
             return result;
