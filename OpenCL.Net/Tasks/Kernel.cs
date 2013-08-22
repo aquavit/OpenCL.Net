@@ -16,6 +16,8 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.CodeDom;
 
@@ -85,7 +87,15 @@ namespace OpenCL.Net.Tasks
         private const string VectorWidth = "vectorWidth";
 
         private static readonly Regex _kernelParser = new Regex(@"(__)?kernel\s+void\s+(?<kernelName>[\w_]+)\s*\((\s*(__)?(?<qualifier>((?<qual>(global|local))\s+)?(?(qual)|(\.?)))(?<datatype>(bool|char|unsigned char|uchar|short|unsigned short|ushort|float|int|unsigned int|uint|long|unsigned long|ulong|size_t))(?<vectorWidth>(16|2|3|4|8)?)\s*(?<pointer>\*?)\s+(?<identifier>[_\w]+)\s*,?\s*)+\)",
-            RegexOptions.Singleline | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture);
+
+        private static readonly Regex _stripLineBreaksInKernelSignature = new Regex(@"^(__)?kernel .+\(([_a-zA-Z0-9*\s]+,?\s*(?:\r\n)?)+");
+        private static void StripKernelSignatureLinebreaks(ref string original)
+        {
+            var match = _stripLineBreaksInKernelSignature.Match(original);
+            foreach (Capture capture in match.Groups[2].Captures)
+                original = original.Replace(capture.Value, capture.Value.Trim());
+        }
 
         private static string GenerateCSharpCode(CodeCompileUnit compileunit)
         {
@@ -164,6 +174,9 @@ namespace OpenCL.Net.Tasks
             var ns = new CodeNamespace(kernelFilename);
             codeUnit.Namespaces.Add(ns);
 
+            // Ensure that kernel signatures do not have line breaks
+            StripKernelSignatureLinebreaks(ref kernelFileContents);
+
             var lines = kernelFileContents.Split(new[] { System.Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
 
             var kernelSource = new CodeTypeDeclaration(kernelFilename + "_Source");
@@ -183,7 +196,7 @@ namespace OpenCL.Net.Tasks
                     Attributes = MemberAttributes.Static | MemberAttributes.Public,
                     InitExpression = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(File)), "ReadAllText",
                     new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(Path)), "Combine",
-                        new CodeSnippetExpression("Path.GetDirectoryName(System.AppDomain.CurrentDomain.BaseDirectory)"),
+                        new CodeSnippetExpression("System.IO.Path.GetDirectoryName(System.AppDomain.CurrentDomain.BaseDirectory)"),
                         new CodePrimitiveExpression(outputPath))
                         )
                 };

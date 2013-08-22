@@ -250,15 +250,25 @@ namespace OpenCL.Net.Extensions
 
         public static IMem<T> CreateBuffer<T>(this Context context, int length, MemFlags flags = MemFlags.None, bool zero = false) where T: struct
         {
-            var hostData = new T[length];
             ErrorCode err;
-            
-            var result = Cl.CreateBuffer<T>(context, flags | MemFlags.CopyHostPtr, hostData, out err);
-            
-            err.Check();
-            hostData = null;
-            
-            return result;
+            if (zero)
+            {
+                var hostData = new T[length];
+
+                var result = Cl.CreateBuffer<T>(context, flags | MemFlags.CopyHostPtr, hostData, out err);
+
+                err.Check();
+                hostData = null;
+
+                return result;
+            }
+            else
+            {
+                var result = Cl.CreateBuffer<T>(context, flags, length, out err);
+                err.Check();
+
+                return result;
+            }
         }
         public static IMem<T> CreateBuffer<T>(this Context context, T[] data, MemFlags flags = MemFlags.None) where T : struct
         {
