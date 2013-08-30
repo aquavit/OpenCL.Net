@@ -1,5 +1,7 @@
-﻿__kernel void doSomething(__global float* a, 
-						  __global float* b, 
+﻿__kernel void doSomething(
+					      /* This is A */ __global float* a, 
+						  /* This is B */ __global float* b, 
+						  // Scaling factor here
 						  float scale)
 {
 	int id = get_global_id(0);

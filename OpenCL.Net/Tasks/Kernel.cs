@@ -86,15 +86,33 @@ namespace OpenCL.Net.Tasks
         private const string Identifier = "identifier";
         private const string VectorWidth = "vectorWidth";
 
-        private static readonly Regex _kernelParser = new Regex(@"(__)?kernel\s+void\s+(?<kernelName>[\w_]+)\s*\((\s*(__)?(?<qualifier>((?<qual>(global|local))\s+)?(?(qual)|(\.?)))(?<datatype>(bool|char|unsigned char|uchar|short|unsigned short|ushort|float|int|unsigned int|uint|long|unsigned long|ulong|size_t))(?<vectorWidth>(16|2|3|4|8)?)\s*(?<pointer>\*?)\s+(?<identifier>[_\w]+)\s*,?\s*)+\)",
+        private static readonly Regex _kernelParser = new Regex(@"(__)?kernel\s+void\s+(?<kernelName>[\w_]+)\s*\((\s*(__)?(?<qualifier>((?<qual>(global|local))\s+)?(?(qual)|(\.?)))(?<datatype>(bool|char|unsigned char|uchar|short|unsigned short|ushort|float|int|unsigned int|uint|long|unsigned long|ulong|size_t))(?<vectorWidth>(16|2|3|4|8)?)\s*(?<pointer>\*?)\s*(?<identifier>[_\w]+)\s*,?\s*)+\)",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture);
-
         private static readonly Regex _stripLineBreaksInKernelSignature = new Regex(@"^(__)?kernel .+\(([_a-zA-Z0-9*\s]+,?\s*(?:\r\n)?)+");
+        
+        private const string blockComments = @"/\*(.*?)\*/";
+        private const string lineComments = @"//(.*?)\r?\n";
+        private const string strings = @"""((\\[^\n]|[^""\n])*)""";
+
         private static void StripKernelSignatureLinebreaks(ref string original)
         {
             var match = _stripLineBreaksInKernelSignature.Match(original);
             foreach (Capture capture in match.Groups[2].Captures)
                 original = original.Replace(capture.Value, capture.Value.Trim());
+        }
+
+        private static void StripComments(ref string original)
+        {
+            original = Regex.Replace(original,
+                blockComments + "|" + lineComments + "|" + strings,
+                me =>
+                {
+                    if (me.Value.StartsWith("/*") || me.Value.StartsWith("//"))
+                        return me.Value.StartsWith("//") ? System.Environment.NewLine : "";
+                    // Keep the literal strings
+                    return me.Value;
+                },
+                RegexOptions.Singleline);
         }
 
         private static string GenerateCSharpCode(CodeCompileUnit compileunit)
@@ -173,6 +191,9 @@ namespace OpenCL.Net.Tasks
             var codeUnit = new CodeCompileUnit();
             var ns = new CodeNamespace(kernelFilename);
             codeUnit.Namespaces.Add(ns);
+            
+            // Strip comments
+            StripComments(ref kernelFileContents);
 
             // Ensure that kernel signatures do not have line breaks
             StripKernelSignatureLinebreaks(ref kernelFileContents);
@@ -196,7 +217,7 @@ namespace OpenCL.Net.Tasks
                     Attributes = MemberAttributes.Static | MemberAttributes.Public,
                     InitExpression = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(File)), "ReadAllText",
                     new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(Path)), "Combine",
-                        new CodeSnippetExpression("System.IO.Path.GetDirectoryName(System.AppDomain.CurrentDomain.BaseDirectory)"),
+                        new CodeSnippetExpression("System.AppDomain.CurrentDomain.BaseDirectory"),
                         new CodePrimitiveExpression(outputPath))
                         )
                 };
