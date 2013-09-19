@@ -17,6 +17,7 @@
 
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 //General assembly information
 
@@ -26,3 +27,5 @@ using System.Runtime.InteropServices;
 // GUID for the ID of the typelib if this project is exposed to COM
 
 [assembly: Guid("843901d2-80e4-4310-ac81-c86885e2da7e")]
+
+[assembly:InternalsVisibleTo("OpenCL.Net.Tests")]

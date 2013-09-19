@@ -34,5 +34,6 @@ Please send comments and/or suggestions to ananth&lt;at&gt;ananthonline&lt;dot&g
   </metadata>
   <files>
     <file src="net40\$id$.targets" target="build\net40"/>
+    <file src="*.xml" target="content" exclude="FodyWeavers.xml"/>
   </files>
 </package>

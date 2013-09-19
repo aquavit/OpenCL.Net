@@ -86,9 +86,9 @@ namespace OpenCL.Net.Tasks
         private const string Identifier = "identifier";
         private const string VectorWidth = "vectorWidth";
 
-        private static readonly Regex _kernelParser = new Regex(@"(__)?kernel\s+void\s+(?<kernelName>[\w_]+)\s*\((\s*(__)?(?<qualifier>((?<qual>(global|local))\s+)?(?(qual)|(\.?)))(?<datatype>(bool|char|unsigned char|uchar|short|unsigned short|ushort|float|int|unsigned int|uint|long|unsigned long|ulong|size_t))(?<vectorWidth>(16|2|3|4|8)?)\s*(?<pointer>\*?)\s*(?<identifier>[_\w]+)\s*,?\s*)+\)",
+        private static readonly Regex _kernelParser = new Regex(@"(__)?kernel\s+void\s+(?<kernelName>[\w_]+)\s*\((\s*(__)?(?<qualifier>((?<qual>(global|local|read_only|write_only))\s+)?(?(qual)|(\.?)))(?<datatype>(bool|char|unsigned char|uchar|short|unsigned short|ushort|float|int|unsigned int|uint|long|unsigned long|ulong|size_t|image2d_t|image3d_t|sampler_t))(?<vectorWidth>(16|2|3|4|8)?)\s*(?<pointer>\*?)\s*(?<identifier>[_\w]+)\s*,?\s*)+\)",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture);
-        private static readonly Regex _stripLineBreaksInKernelSignature = new Regex(@"^(__)?kernel .+\(([_a-zA-Z0-9*\s]+,?\s*(?:\r\n)?)+");
+        private static readonly Regex _stripLineBreaksInKernelSignature = new Regex(@"(__)?kernel(?:\r\n)?.+(?:\r\n)?\((?:\r\n)?([_a-zA-Z0-9*\s]+,?\s*(?:\r\n)?)+");
         
         private const string blockComments = @"/\*(.*?)\*/";
         private const string lineComments = @"//(.*?)\r?\n";
@@ -159,6 +159,11 @@ namespace OpenCL.Net.Tasks
 
                     case "size_t": return typeof(IntPtr).FullName;
 
+                    case "image2d_t":
+                    case "image3d_t":
+                    case "sampler_t":
+                        return typeof(IMem).FullName;
+
                     default:
                         return "Unknown";
                 }
@@ -184,7 +189,7 @@ namespace OpenCL.Net.Tasks
             }
         }
 
-        private static string ProcessKernelFile(string filename, string kernelFileContents, bool embedSource = true, string outputPath = null)
+        internal static string ProcessKernelFile(string filename, string kernelFileContents, bool embedSource = true, string outputPath = null)
         {
             var kernelFilename = Path.GetFileNameWithoutExtension(filename);
 
@@ -359,6 +364,8 @@ namespace OpenCL.Net.Tasks
                                 name = name + "_length";
                                 parameter = new CodeParameterDeclarationExpression(typeof(int), name);
                                 break;
+                            case "read_only":
+                            case "write_only":
                             case "":
                                 parameter = new CodeParameterDeclarationExpression(TranslateType(rawDatatype, vectorWidth), name);
                                 break;
@@ -378,7 +385,9 @@ namespace OpenCL.Net.Tasks
                         var setArgument = local ?
                             new CodeMethodInvokeExpression(new CodeSnippetExpression("OpenCL.Net.Cl"), "SetKernelArg",
                                 new CodePropertyReferenceExpression(new CodeThisReferenceExpression(), "Kernel"), new CodeSnippetExpression(i.ToString()),
-                                new CodeCastExpression(new CodeTypeReference(typeof(IntPtr)), new CodeArgumentReferenceExpression(name)),
+                                new CodeCastExpression(new CodeTypeReference(typeof(IntPtr)), new CodeBinaryOperatorExpression(new CodeArgumentReferenceExpression(name), 
+                                    CodeBinaryOperatorType.Multiply,
+                                    new CodeSnippetExpression(string.Format("OpenCL.Net.TypeSize<{0}>.SizeInt", TranslateType(rawDatatype, vectorWidth))))),
                                 new CodeSnippetExpression("null")) :
                             new CodeMethodInvokeExpression(new CodeSnippetExpression("OpenCL.Net.Cl"), "SetKernelArg",
                                 new CodePropertyReferenceExpression(new CodeThisReferenceExpression(), "Kernel"), new CodeSnippetExpression(i.ToString()),

@@ -76,6 +76,7 @@
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\Samples\OpenCL.Net.Samples.targets" Condition="Exists('$(SolutionDir)\Samples\OpenCL.Net.Samples.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -22,6 +22,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Collections.Generic;
+using ExtraConstraints;
 
 namespace OpenCL.Net
 {
@@ -92,7 +93,7 @@ namespace OpenCL.Net
         }
     }
 
-    internal sealed class TypeSize<T>
+    public sealed class TypeSize<T>
     {
         public static readonly IntPtr Size = (IntPtr)Marshal.SizeOf(typeof(T));
         public static readonly int SizeInt = Marshal.SizeOf(typeof(T));
@@ -479,6 +480,10 @@ namespace OpenCL.Net
     public interface IMem<T> : IMem
         where T: struct
     { }
+
+    public interface IMem<[EnumConstraint(typeof(ChannelOrder))] TOrder, [EnumConstraint(typeof(ChannelType))] TType>: IMem
+    {
+    }
 
     public interface IMem: IDisposable
     { 
