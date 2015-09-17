@@ -341,8 +341,12 @@ namespace OpenCL.Net.Tests
                 Kernel[] kernels = Cl.CreateKernelsInProgram(program, out error);
                 Assert.AreEqual(error, ErrorCode.Success);
                 Assert.AreEqual(kernels.Length, 2);
-                Assert.AreEqual("add_array", Cl.GetKernelInfo(kernels[0], KernelInfo.FunctionName, out error).ToString());
-                Assert.AreEqual("sub_array", Cl.GetKernelInfo(kernels[1], KernelInfo.FunctionName, out error).ToString());
+
+				var kernel1Name = Cl.GetKernelInfo(kernels[0], KernelInfo.FunctionName, out error).ToString();
+				var kernel2Name = Cl.GetKernelInfo(kernels[1], KernelInfo.FunctionName, out error).ToString();
+
+				//Don't assume a certain order
+				Assert.IsTrue((kernel1Name == "add_array" && kernel2Name == "sub_array") || (kernel1Name == "sub_array" && kernel2Name == "add_array"));
             }
         }
 
