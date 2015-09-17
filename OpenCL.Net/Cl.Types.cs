@@ -869,11 +869,7 @@ namespace OpenCL.Net
 
         public void Dispose()
         {
-            for (int i = 0; i < _buffers.Length; i++)
-                new InfoBuffer
-                {
-                    Address = _buffers[i]
-                }.Dispose();
+			//Do not free InfoBuffers here--they were allocated outside of our scope, allow the caller to free them as well
         }
     }
 

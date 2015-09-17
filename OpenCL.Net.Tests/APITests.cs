@@ -142,6 +142,26 @@ namespace OpenCL.Net.Tests
             using (Context context = Cl.CreateContext(null, 1, new[] { device }, null, IntPtr.Zero, out error))
                 refCount = Cl.GetContextInfo(context, ContextInfo.ReferenceCount, out error).CastTo<uint>();
         }
+
+		[Test]
+		public void InfoBufferArrayFromByteArray()
+		{
+			var byteArray = new byte[] { 1, 2, 3, 4, 5 };
+			using (var infoBuffer = new InfoBuffer(byteArray))
+			{
+				Assert.AreEqual(byteArray.Length, infoBuffer.Size);
+				using (var infoBufferArray = new InfoBufferArray(infoBuffer))
+				{
+					Assert.AreEqual(1, infoBufferArray.Length);
+
+					var backToByteArray = infoBufferArray[0].CastToArray<byte>(byteArray.Length);
+					for (int i = 0; i < byteArray.Length; i++)
+					{
+						Assert.AreEqual(byteArray[i], backToByteArray[i]);
+					}
+				}
+			}
+		}
     }
 
     [TestFixture]
