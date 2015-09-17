@@ -869,19 +869,15 @@ namespace OpenCL.Net
 
         public void Dispose()
         {
-            for (int i = 0; i < _buffers.Length; i++)
-                new InfoBuffer
-                {
-                    Address = _buffers[i]
-                }.Dispose();
+			//Do not free InfoBuffers here--they were allocated outside of our scope, allow the caller to free them as well
         }
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct InfoBuffer : IDisposable
     {
-        [DllImport("msvcrt.dll", EntryPoint = "memcpy")]
-        private static extern void CopyMemory(IntPtr pDest, IntPtr pSrc, int length);
+		[DllImport("msvcrt.dll", EntryPoint = "memcpy", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+		private static extern void CopyMemory(IntPtr pDest, IntPtr pSrc, int length);
 
         private static readonly InfoBuffer _empty = new InfoBuffer
         {
