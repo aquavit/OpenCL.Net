@@ -876,8 +876,8 @@ namespace OpenCL.Net
     [StructLayout(LayoutKind.Sequential)]
     public struct InfoBuffer : IDisposable
     {
-        [DllImport("msvcrt.dll", EntryPoint = "memcpy")]
-        private static extern void CopyMemory(IntPtr pDest, IntPtr pSrc, int length);
+		[DllImport("msvcrt.dll", EntryPoint = "memcpy", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+		private static extern void CopyMemory(IntPtr pDest, IntPtr pSrc, int length);
 
         private static readonly InfoBuffer _empty = new InfoBuffer
         {
